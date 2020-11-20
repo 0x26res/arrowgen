@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+/arrowgen/tests/messages/simple.appender.cc
+/arrowgen/tests/messages/simple.appender.h
+/arrowgen/tests/messages/simple.pb.cc
+/arrowgen/tests/messages/simple.pb.h
+/arrowgen/tests/messages/simple_pb2.py
+/arrowgen/tests/a.out
