@@ -1,5 +1,9 @@
 #include "messages/simple.appender.h"
-
+#include <google/protobuf/util/json_util.h>
+#include <boost/algorithm/string.hpp>
+#include <stdexcept>
+#include <fstream>
+#include <sstream>
 
 #define EXIT_ON_FAILURE(expr)                      \
   do {                                             \
@@ -10,40 +14,54 @@
     }                                              \
   } while (0);
 
-messages::DataRow createDataRow(int id, double cost, std::vector<double> const &cost_components) {
-  messages::DataRow results;
-  results.set_id(id);
-  results.set_cost(cost);
-  for (double cost_component : cost_components) {
-    results.add_cost_components(cost_component);
-  }
-  return results;
-}
-
-messages::SearchResult createSearchResult(messages::ReturnCode return_code, std::string const &message) {
-  messages::SearchResult results;
-  results.set_return_code(return_code);
-  results.set_message(message);
-  return results;
-}
-
 template<class T>
-bool compare(T const &l, T const &r) {
-  std::string lstring = l.SerializeAsString();
-  std::string rstring = r.SerializeAsString();
-  return lstring == rstring;
+void compareProto(T const &l, T const &r) {
+  std::string lstring, rstring;
+  google::protobuf::util::Status lstatus = google::protobuf::util::MessageToJsonString(l, &lstring);
+  google::protobuf::util::Status rstatus = google::protobuf::util::MessageToJsonString(r, &rstring);
+  if (!lstatus.ok()) {
+    throw std::runtime_error(lstatus.error_message().as_string());
+  } else if (!rstatus.ok()) {
+    throw std::runtime_error(rstatus.error_message().as_string());
+  } else if (lstring != rstring) {
+    throw std::runtime_error("\n" + lstring + '\n' + rstring);
+  } else {
+    std::cout << "OK " << lstring << std::endl;
+  }
 }
 
 template<class T, class R>
-arrow::Status compare(std::shared_ptr<arrow::Table> table, std::vector<T> const& data) {
+arrow::Status compare(std::shared_ptr<arrow::Table> table, std::vector<T> const &data) {
   R reader(table);
   for (T const &message : data) {
     T actual;
     ARROW_RETURN_NOT_OK(reader.readNext(actual));
-    assert(compare(message, actual));
+    compareProto(message, actual);
   }
   assert(reader.end());
   return arrow::Status::OK();
+}
+
+template<class T>
+std::vector<T> loadJson(std::string const &fileName) {
+  std::vector<T> messages;
+  std::ifstream infile(fileName);
+  assert(infile.good());
+  std::string line;
+  while (std::getline(infile, line)) {
+    boost::trim(line);
+    if (!line.empty()) {
+      T message;
+      google::protobuf::util::Status status = google::protobuf::util::JsonStringToMessage(line, &message);
+      if (status != google::protobuf::util::Status::OK) {
+        throw std::runtime_error("[" + line + ']' + status.error_message().as_string());
+      } else {
+        messages.push_back(message);
+      }
+    }
+  }
+  return messages;
+
 }
 
 template<class T, class A, class R>
@@ -63,7 +81,7 @@ arrow::Status testDataType(std::vector<T> const data) {
 
   std::shared_ptr<arrow::Table> table2 = arrow::ConcatenateTables({table, table}).ValueOrDie();
   std::vector<T> data2(data);
-  for (T const& message : data) {
+  for (T const &message : data) {
     data2.push_back(message);
   }
   arrow::Status status2 = ::compare<T, R>(table2, data2);
@@ -72,18 +90,17 @@ arrow::Status testDataType(std::vector<T> const data) {
 }
 
 arrow::Status testDataRow() {
-  std::vector<messages::DataRow> messages = {
-      ::createDataRow(1, 1.0, {0.5, 0.5}),
-      ::createDataRow(2, 2.0, {0.5, 0.5, 1.0}),
-  };
+  std::vector<messages::DataRow> messages = loadJson<messages::DataRow>("messages/DataRow.jsonl");
   return testDataType<messages::DataRow, messages::DataRowAppender, messages::DataRowReader>(messages);
 }
 
+arrow::Status testTestMessage() {
+  std::vector<messages::TestMessage> messages = loadJson<messages::TestMessage>("messages/TestMessage.jsonl");
+  return testDataType<messages::TestMessage, messages::TestMessageAppender, messages::TestMessageReader>(messages);
+}
+
 arrow::Status testSearchResult() {
-  std::vector<messages::SearchResult> messages = {
-      ::createSearchResult(messages::ReturnCode::OK, "200"),
-      ::createSearchResult(messages::ReturnCode::ERROR, "403"),
-  };
+  std::vector<messages::SearchResult> messages = loadJson<messages::SearchResult>("messages/SearchResult.jsonl");
   return testDataType<messages::SearchResult, messages::SearchResultAppender, messages::SearchResultReader>(messages);
   return arrow::Status::OK();
 }
@@ -91,6 +108,7 @@ arrow::Status testSearchResult() {
 int main(int argc, char** argv) {
   EXIT_ON_FAILURE(testDataRow());
   EXIT_ON_FAILURE(testSearchResult());
+  EXIT_ON_FAILURE(testTestMessage());
   return EXIT_SUCCESS;
 }
 

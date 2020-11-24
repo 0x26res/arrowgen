@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Sequence
 
 from google.protobuf.descriptor import FileDescriptor, Descriptor, FieldDescriptor
 
@@ -55,7 +56,14 @@ ARROW_TYPES = {
 }
 
 
-class ReaderField:
+@dataclass
+class ClassMember:
+    name: str
+    cpp_type: str
+    initializer: str
+
+
+class BaseField:
     def __init__(self, field: FieldDescriptor, index: int):
         self.field = field
         self.index = index
@@ -63,20 +71,53 @@ class ReaderField:
     def name(self):
         return self.field.name
 
+    def make_name(self, suffix: str):
+        return self.field.name + '_' + suffix + '_'
+
+    def is_repeated(self):
+        return self.field.label == FieldDescriptor.LABEL_REPEATED
+
+    def is_enum(self):
+        return self.field.cpp_type == FieldDescriptor.CPPTYPE_ENUM
+
+    def value_type(self):
+        if self.is_enum():
+            return self.field.enum_type.full_name.replace('.', '::')
+        else:
+            return CPP_TYPES[self.field.cpp_type]
+
+    def cpp_type(self):
+        return CPP_TYPES[self.field.cpp_type]
+
+    def offset_type(self):
+        # TODO: implement
+        return 'uint64_t'
+
+
+class ReaderField(BaseField):
+    def __init__(self, field: FieldDescriptor, index: int):
+        super().__init__(field, index)
+
     def index_name(self):
-        return f'{self.field.name}_index_'
+        return self.make_name('index')
 
     def array_name(self):
-        return f'{self.field.name}_array_'
+        return self.make_name('array')
+
+    def list_array_name(self):
+        return self.make_name('list_array')
+
+    def main_array_name(self):
+        if self.is_repeated():
+            return self.list_array_name()
+        else:
+            return self.array_name()
 
     def chunk_name(self):
-        return f'{self.field.name}_chunk_'
+        return self.make_name('chunk')
 
-    def pointer_name(self):
-        return f'{self.field.name}_pointer_'
-
-    def get_pointer_statement(self):
-        return f'{self.array_name()}'
+    def list_array_caster(self):
+        return 'std::static_pointer_cast<arrow::ListArray>'
 
     def array_caster(self):
         return f'std::static_pointer_cast<{self.array_type()}>'
@@ -90,43 +131,70 @@ class ReaderField:
         else:
             return 'Value'
 
-    def is_repeated(self):
-        return self.field.label == FieldDescriptor.LABEL_REPEATED
-
-    def is_enum(self):
-        return self.field.cpp_type == FieldDescriptor.CPPTYPE_ENUM
-
     def optional_cast(self):
         if self.is_enum():
-            return f'({self.value_type()    })'
+            return f'({self.value_type()})'
         else:
             return ''
 
     def array_type(self):
+        return CPP_ARRAYS[self.field.cpp_type]
+
+    def members(self):
+        yield ClassMember(self.chunk_name(), 'uint64_t', '0')
+        yield ClassMember(self.index_name(), 'uint64_t', '0')
         if self.is_repeated():
-            return 'arrow::ListArray'
+            yield ClassMember(
+                self.list_array_name(),
+                f'std::shared_ptr<arrow::ListArray>',
+                f'{self.list_array_caster()}({self.get_array_statement()})'
+            )
+            yield ClassMember(
+                self.array_name(),
+                f'std::shared_ptr<{self.array_type()}>',
+                f'{self.array_caster()}({self.list_array_name()}->values())'
+            )
         else:
-            return CPP_ARRAYS[self.field.cpp_type]
+            yield ClassMember(
+                self.array_name(),
+                f'std::shared_ptr<{CPP_ARRAYS[self.field.cpp_type]}>',
+                f'{self.array_caster()}({self.get_array_statement()})'
+            )
 
-    def value_type(self):
-        if self.is_enum():
-            return self.field.enum_type.full_name.replace('.', '::')
+
+class AppenderField(BaseField):
+    def __init__(self, field: FieldDescriptor, index: int):
+        super().__init__(field, index)
+
+    def builder_name(self):
+        return self.field.name + '_builder_'
+
+    def list_builder_name(self):
+        return self.field.name + '_list_builder_'
+
+    def builder_type(self):
+        return CPP_BUILDERS[self.field.cpp_type]
+
+    def is_repeated(self):
+        return self.field.label == FieldDescriptor.LABEL_REPEATED
+
+    def members(self) -> Sequence[ClassMember]:
+        if self.is_repeated():
+            yield ClassMember(
+                self.list_builder_name(),
+                "arrow::ListBuilder",
+                f'pool, std::make_shared<{self.builder_type()}>(pool)')
+            yield ClassMember(
+                self.builder_name(),
+                self.builder_type() + '&',
+                f'*(static_cast < {self.builder_type()} * > ({self.list_builder_name()}.value_builder()))'
+            )
         else:
-            return CPP_TYPES[self.field.cpp_type]
-
-    def cpp_type(self):
-        return CPP_TYPES[self.field.cpp_type]
-
-@dataclass
-class ReaderMember:
-    name: str
-    cpp_type: str
-    initializer: str
-
-
-class ReaderStatement:
-    name: str
-    index: int
+            yield ClassMember(
+                self.builder_name(),
+                self.builder_type(),
+                'pool'
+            )
 
 
 class MessageWrapper:
@@ -145,25 +213,6 @@ class MessageWrapper:
 
     def message_name(self):
         return self.descriptor.full_name.replace('.', '::')
-
-    def builders(self):
-        for field in self.descriptor.fields:
-            if field.label != FieldDescriptor.LABEL_REPEATED:
-                yield CPP_BUILDERS[field.cpp_type] + ' ' + field.name + '_builder_;'
-            else:
-                yield "arrow::ListBuilder " + field.name + '_list_builder_;'
-                yield CPP_BUILDERS[field.cpp_type] + '& ' + field.name + '_builder_;'
-
-    def initializer_statements(self):
-        for field in self.descriptor.fields:
-            if field.label != FieldDescriptor.LABEL_REPEATED:
-                yield f'{field.name}_builder_(pool)'
-            else:
-                yield f'{field.name}_list_builder_(pool, std::make_shared<{CPP_BUILDERS[field.cpp_type]}>(pool))'
-                yield f'{field.name}_builder_(*(static_cast<{CPP_BUILDERS[field.cpp_type]} *>({field.name}_list_builder_.value_builder())))'
-
-    def initializer_statement(self):
-        return ': ' + ',\n'.join(self.initializer_statements())
 
     def append_statements(self):
         for field in self.descriptor.fields:
@@ -199,30 +248,23 @@ class MessageWrapper:
         for field in self.descriptor.fields:
             yield f'{field.name}_array'
 
-    def reader_members(self):
-        for index, field in enumerate(self.descriptor.fields):
-            yield ReaderMember(f'{field.name}_chunk_', 'uint64_t', '0')
-            yield ReaderMember(f'{field.name}_index_', 'uint64_t', '0')
-            array_type = (
-                'arrow::ListArray'
-                if field.label == FieldDescriptor.LABEL_REPEATED
-                else CPP_ARRAYS[field.cpp_type]
-            )
-            yield ReaderMember(
-                f'{field.name}_array_',
-                f'std::shared_ptr<{array_type}>',
-                f'std::static_pointer_cast<{array_type}> (table->column({index})->chunk(0))'
-            )
-            if field.label == FieldDescriptor.LABEL_REPEATED:
-                yield ReaderMember(
-                    f'{field.name}_pointer_',
-                    f'const {CPP_TYPES.get(field.cpp_type)}*',
-                    f'{field.name}_array_->values()->data()->GetValues<{CPP_TYPES[field.cpp_type]}>(1)'
-                )
+    def reader_members(self) -> Sequence[ClassMember]:
+        for reader_field in self.reader_fields():
+            for reader_member in reader_field.members():
+                yield reader_member
 
-    def reader_fields(self):
+    def reader_fields(self) -> Sequence[ReaderField]:
         for index, field in enumerate(self.descriptor.fields):
             yield ReaderField(field, index)
+
+    def appender_fields(self) -> Sequence[AppenderField]:
+        for index, field in enumerate(self.descriptor.fields):
+            yield AppenderField(field, index)
+
+    def appender_members(self) -> Sequence[ClassMember]:
+        for appender_field in self.appender_fields():
+            for member in appender_field.members():
+                yield member
 
 
 class FileWrapper:

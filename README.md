@@ -21,9 +21,11 @@ This is a work in progress
 
 - [ ] Add support for nested data
 - [ ] Stop poluting the source when testing
-- [ ] Lint/format generated code 
+- [ ] Lint/format generated code
 - [ ] Discover libraries dynamically when compiling in test
 - [ ] Add documentation (type mapping)
-- [ ] Generate test data dynamically from python (maybe in json?)
 - [ ] Add support for maps
-- [ ] rationalize wrappers (use field wrappers)
+- [ ] Improve docs
+- [ ] Add CMake for tests
+- [ ] Use TypeTraits
+- [ ] Work column by column?

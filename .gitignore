@@ -133,3 +133,7 @@ dmypy.json
 /arrowgen/tests/messages/simple.pb.h
 /arrowgen/tests/messages/simple_pb2.py
 /arrowgen/tests/a.out
+
+
+# Project specific
+*.jsonl

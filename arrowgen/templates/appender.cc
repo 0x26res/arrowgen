@@ -8,8 +8,8 @@ namespace {{namespace}} {
 {% for wrapper in file_wrapper.message_wrappers() -%}
 
 {{wrapper.appender_name()}}::{{wrapper.appender_name()}}(arrow::MemoryPool *pool)
-    {% for initializer_statement in wrapper.initializer_statements() -%}
-    {{ ": " if loop.first }}{{initializer_statement}}{{ "," if not loop.last }}
+    {% for member in wrapper.appender_members() -%}
+    {{ ": " if loop.first }}{{member.name}}({{member.initializer}}){{ "," if not loop.last }}
     {% endfor %}
 {
 }
@@ -66,19 +66,21 @@ arrow::Status {{wrapper.reader_name()}}::readNext({{wrapper.message_name()}} &me
     return arrow::Status::IndexError("Too far");
   } else {
     {% for field in wrapper.reader_fields() -%}
-    while ({{field.index_name()}} >= {{field.array_name()}}->length()) {
+    while ({{field.index_name()}} >= {{field.main_array_name()}}->length()) {
         {{field.index_name()}} = 0;
         ++{{field.chunk_name()}};
-        {{field.array_name()}} = {{field.array_caster()}}({{field.get_array_statement()}});
         {% if field.is_repeated() %}
-        {{field.pointer_name()}} = {{field.array_name()}}->values()->data()->GetValues<{{field.cpp_type()}}>(1);
+        {{field.list_array_name()}} = {{field.list_array_caster()}}({{field.get_array_statement()}});
+        {{field.array_name()}} = {{field.array_caster()}}({{field.list_array_name()}}->values());
+        {% else %}
+        {{field.array_name()}} = {{field.array_caster()}}({{field.get_array_statement()}});
         {% endif %}
     }
     {% if field.is_repeated() %}
-    for (arrow::ListArray::offset_type index = {{field.array_name()}}->value_offset({{field.index_name()}});
-         index < {{field.array_name()}}->value_offset({{field.index_name()}} + 1);
+    for ({{field.offset_type()}} index = {{field.list_array_name()}}->value_offset({{field.index_name()}});
+         index < {{field.list_array_name()}}->value_offset({{field.index_name()}} + 1);
          ++index) {
-      message.add_{{field.name()}}({{field.optional_cast()}}*({{field.pointer_name()}} + index));
+      message.add_{{field.name()}}({{field.optional_cast()}}{{field.array_name()}}->{{field.value_reader()}}(index) );
     }
     {% else %}
     message.set_{{field.name()}}({{field.optional_cast()}}{{field.array_name()}}->{{field.value_reader()}}({{field.index_name()}}));
