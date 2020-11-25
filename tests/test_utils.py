@@ -1,12 +1,6 @@
 import random
-import subprocess
 
 from google.protobuf.descriptor import FieldDescriptor, EnumDescriptor
-
-
-def run_command(command):
-    subprocess.run(command, check=True, text=True)
-
 
 VALID_DATA = {
     FieldDescriptor.TYPE_BYTES: [b'1', b'foo', b'\n']
