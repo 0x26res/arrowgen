@@ -51,4 +51,4 @@ The generated code consist of two classes per message:
 - [ ] Improve docs
 - [ ] Use TypeTraits
 - [ ] Work column by column?
-- [ ] Add arg parser
+- [ ] Add classifiers
