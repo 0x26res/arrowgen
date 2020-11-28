@@ -24,6 +24,8 @@ def generate_data(descriptor):
         data = generate_field_data(field)
         if field.label == FieldDescriptor.LABEL_REPEATED:
             getattr(message, field.name).extend(data)
+        elif field.cpp_type == FieldDescriptor.CPPTYPE_MESSAGE:
+            getattr(message, field.name).CopyFrom(data)
         else:
             setattr(message, field.name, data)
     return message
@@ -41,7 +43,10 @@ def _generate_data(field: FieldDescriptor):
     if field.cpp_type == FieldDescriptor.CPPTYPE_ENUM:
         return _generate_enum(field.enum_type)
     elif field.cpp_type == FieldDescriptor.CPPTYPE_MESSAGE:
-        raise ValueError("Not implemented")
+        if field.label == FieldDescriptor.LABEL_REPEATED:
+            raise ValueError('Not Implemented')
+        else:
+            return generate_data(field.message_type)
     elif field.type in VALID_DATA:
         return random.choice(VALID_DATA[field.type])
     else:

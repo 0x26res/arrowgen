@@ -23,7 +23,6 @@ CPP_BUILDERS = {
     FieldDescriptor.CPPTYPE_FLOAT: 'arrow::FloatBuilder',
     FieldDescriptor.CPPTYPE_INT32: 'arrow::Int32Builder',
     FieldDescriptor.CPPTYPE_INT64: 'arrow::Int64Builder',
-    # FieldDescriptor.CPPTYPE_MESSAGE: 'arrow::',
     FieldDescriptor.CPPTYPE_STRING: 'arrow::StringBuilder',
     FieldDescriptor.CPPTYPE_UINT32: 'arrow::UInt32Builder',
     FieldDescriptor.CPPTYPE_UINT64: 'arrow::UInt64Builder',
@@ -36,7 +35,7 @@ CPP_ARRAYS = {
     FieldDescriptor.CPPTYPE_FLOAT: 'arrow::FloatArray',
     FieldDescriptor.CPPTYPE_INT32: 'arrow::Int32Array',
     FieldDescriptor.CPPTYPE_INT64: 'arrow::Int64Array',
-    # FieldDescriptor.CPPTYPE_MESSAGE: 'arrow::',
+    FieldDescriptor.CPPTYPE_MESSAGE: 'arrow::StructArray',
     FieldDescriptor.CPPTYPE_STRING: 'arrow::StringArray',
     FieldDescriptor.CPPTYPE_UINT32: 'arrow::UInt32Array',
     FieldDescriptor.CPPTYPE_UINT64: 'arrow::UInt64Array',
@@ -80,11 +79,24 @@ class BaseField:
     def is_enum(self):
         return self.field.cpp_type == FieldDescriptor.CPPTYPE_ENUM
 
+    def is_boolean(self):
+        return self.field.cpp_type == FieldDescriptor.CPPTYPE_BOOL
+
+    def is_string(self):
+        return self.field.cpp_type == FieldDescriptor.CPPTYPE_STRING
+
+    def is_message(self):
+        return self.field.cpp_type == FieldDescriptor.CPPTYPE_MESSAGE
+
     def value_type(self):
         if self.is_enum():
             return self.field.enum_type.full_name.replace('.', '::')
         else:
             return CPP_TYPES[self.field.cpp_type]
+
+    def appender_type(self):
+        assert self.is_message()
+        return MessageWrapper(self.field.message_type).appender_name()
 
     def cpp_type(self):
         return CPP_TYPES[self.field.cpp_type]
@@ -92,6 +104,14 @@ class BaseField:
     def offset_type(self):
         # TODO: implement
         return 'uint64_t'
+
+    def schema_statement(self):
+        if self.is_repeated():
+            return f'arrow::field("{self.name()}", arrow::list({ARROW_TYPES[self.field.cpp_type]}))'
+        elif self.is_message():
+            return f'arrow::field("{self.name()}", arrow::struct_({self.appender_type()}::getFieldVector()))'
+        else:
+            return f'arrow::field("{self.name()}", {ARROW_TYPES[self.field.cpp_type]})'
 
 
 class ReaderField(BaseField):
@@ -169,11 +189,17 @@ class AppenderField(BaseField):
     def builder_name(self):
         return self.field.name + '_builder_'
 
+    def array_name(self):
+        return self.field.name + '_array'
+
     def list_builder_name(self):
         return self.field.name + '_list_builder_'
 
     def builder_type(self):
-        return CPP_BUILDERS[self.field.cpp_type]
+        if self.is_message():
+            return self.appender_type()
+        else:
+            return CPP_BUILDERS[self.field.cpp_type]
 
     def is_repeated(self):
         return self.field.label == FieldDescriptor.LABEL_REPEATED
@@ -196,6 +222,30 @@ class AppenderField(BaseField):
                 'pool'
             )
 
+    def append_statements(self):
+        if self.is_repeated():
+            yield f"ARROW_RETURN_NOT_OK({self.list_builder_name()}.Append());"
+            if self.is_boolean():
+                yield f"ARROW_RETURN_NOT_OK({self.builder_name()}.AppendValues(message.{self.name()}().begin(), message.{self.name()}().end()));"
+            elif self.is_string():
+                yield f"for (std::string const& value : message.{self.name()}()) " + '{'
+                yield f'  {self.builder_name()}.Append(value);'
+                yield '}'
+            else:
+                yield f"ARROW_RETURN_NOT_OK({self.builder_name()}.AppendValues(message.{self.name()}().data(), message.{self.name()}().size()));"
+        elif self.is_message():
+            yield f"ARROW_RETURN_NOT_OK({self.builder_name()}.append(message.{self.name()}()));"
+        else:
+            yield f"ARROW_RETURN_NOT_OK({self.builder_name()}.Append(message.{self.name()}()));"
+
+    def finish_statements(self):
+        yield f'std::shared_ptr<arrow::Array> {self.array_name()};'
+        if self.is_repeated():
+            yield f'ARROW_RETURN_NOT_OK({self.list_builder_name()}.Finish(&{self.array_name()}));'
+        else:
+            yield f'ARROW_RETURN_NOT_OK({self.builder_name()}.Finish(&{self.array_name()}));'
+        yield f'arrays.push_back({self.array_name()});'
+
 
 class MessageWrapper:
 
@@ -215,34 +265,18 @@ class MessageWrapper:
         return self.descriptor.full_name.replace('.', '::')
 
     def append_statements(self):
-        for field in self.descriptor.fields:
-            if field.label != FieldDescriptor.LABEL_REPEATED:
-                yield f"ARROW_RETURN_NOT_OK({field.name}_builder_.Append(message.{field.name}()));"
-            else:
-                yield f"ARROW_RETURN_NOT_OK({field.name}_list_builder_.Append());"
-                if field.cpp_type == FieldDescriptor.CPPTYPE_BOOL:
-                    yield f"ARROW_RETURN_NOT_OK({field.name}_builder_.AppendValues(message.{field.name}().begin(), message.{field.name}().end()));"
-                elif field.cpp_type == FieldDescriptor.CPPTYPE_STRING:
-                    yield f"for (std::string const& value : message.{field.name}()) " + '{'
-                    yield f'  {field.name}_builder_.Append(value);'
-                    yield '}'
-                else:
-                    yield f"ARROW_RETURN_NOT_OK({field.name}_builder_.AppendValues(message.{field.name}().data(), message.{field.name}().size()));"
+        for field in self.appender_fields():
+            for append_statement in field.append_statements():
+                yield append_statement
 
     def finish_statements(self):
-        for field in self.descriptor.fields:
-            yield f'std::shared_ptr<arrow::Array> {field.name}_array;';
-            if field.label != FieldDescriptor.LABEL_REPEATED:
-                yield f'ARROW_RETURN_NOT_OK({field.name}_builder_.Finish(&{field.name}_array));';
-            else:
-                yield f'ARROW_RETURN_NOT_OK({field.name}_list_builder_.Finish(&{field.name}_array));';
+        for appender_field in self.appender_fields():
+            for finish_statement in appender_field.finish_statements():
+                yield finish_statement
 
     def schema_statements(self):
-        for field in self.descriptor.fields:
-            if field.label != FieldDescriptor.LABEL_REPEATED:
-                yield f'arrow::field("{field.name}", {ARROW_TYPES[field.cpp_type]})'
-            else:
-                yield f'arrow::field("{field.name}", arrow::list({ARROW_TYPES[field.cpp_type]}))'
+        for field in self.appender_fields():
+            yield field.schema_statement()
 
     def arrays(self):
         for field in self.descriptor.fields:
@@ -265,6 +299,10 @@ class MessageWrapper:
         for appender_field in self.appender_fields():
             for member in appender_field.members():
                 yield member
+
+    def field_names(self):
+        for field in self.descriptor.fields:
+            yield field.name
 
 
 class FileWrapper:

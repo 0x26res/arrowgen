@@ -52,3 +52,6 @@ The generated code consist of two classes per message:
 - [ ] Use TypeTraits
 - [ ] Work column by column?
 - [ ] Add classifiers
+- [ ] Rename generated file to arrow (instead of appender)
+- [ ] try to publish to pypi for real
+- [ ] Make schema & field vector a static member
