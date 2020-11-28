@@ -55,3 +55,5 @@ The generated code consist of two classes per message:
 - [ ] Rename generated file to arrow (instead of appender)
 - [ ] try to publish to pypi for real
 - [ ] Make schema & field vector a static member
+- [ ] use GetColumnByName
+- [ ] add struct array reader
