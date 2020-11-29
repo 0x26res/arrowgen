@@ -91,6 +91,8 @@ class BaseField:
     def value_type(self):
         if self.is_enum():
             return self.field.enum_type.full_name.replace('.', '::')
+        elif self.is_message():
+            return self.field.message_type.full_name.replace('.', '::')
         else:
             return CPP_TYPES[self.field.cpp_type]
 
@@ -145,6 +147,12 @@ class ReaderField(BaseField):
     def get_array_statement(self):
         return f'table_->column({self.index})->chunk({self.chunk_name()})'
 
+    def length_statement(self):
+        if self.is_message():
+            return '.length()'
+        else:
+            return '->length()'
+
     def value_reader(self):
         if self.field.cpp_type == FieldDescriptor.CPPTYPE_STRING:
             return 'GetString'
@@ -160,7 +168,32 @@ class ReaderField(BaseField):
     def array_type(self):
         return CPP_ARRAYS[self.field.cpp_type]
 
-    def members(self):
+    def struct_reader_members(self) -> Sequence[ClassMember]:
+        if self.is_repeated():
+            yield ClassMember(
+                self.list_array_name(),
+                f'std::shared_ptr<arrow::ListArray>',
+                f'{self.list_array_caster()}(struct_array_->GetFieldByName("{self.name()}"))'
+            )
+            yield ClassMember(
+                self.array_name(),
+                f'std::shared_ptr<{self.array_type()}>',
+                f'{self.array_caster()}({self.list_array_name()}->values())'
+            )
+        elif self.is_message():
+            yield ClassMember(
+                self.array_name(),
+                self.struct_reader_type(),
+                f'{self.array_caster()}(struct_array_->GetFieldByName("{self.name()}"))'
+            )
+        else:
+            yield ClassMember(
+                self.array_name(),
+                f'std::shared_ptr<{CPP_ARRAYS[self.field.cpp_type]}>',
+                f'{self.array_caster()}(struct_array_->GetFieldByName("{self.name()}"))'
+            )
+
+    def members(self) -> Sequence[ClassMember]:
         yield ClassMember(self.chunk_name(), 'uint64_t', '0')
         yield ClassMember(self.index_name(), 'uint64_t', '0')
         if self.is_repeated():
@@ -174,12 +207,22 @@ class ReaderField(BaseField):
                 f'std::shared_ptr<{self.array_type()}>',
                 f'{self.array_caster()}({self.list_array_name()}->values())'
             )
+        elif self.is_message():
+            yield ClassMember(
+                self.array_name(),
+                self.struct_reader_type(),
+                f'{self.array_caster()}({self.get_array_statement()})'
+            )
         else:
             yield ClassMember(
                 self.array_name(),
                 f'std::shared_ptr<{CPP_ARRAYS[self.field.cpp_type]}>',
                 f'{self.array_caster()}({self.get_array_statement()})'
             )
+
+    def struct_reader_type(self):
+        assert self.is_message()
+        return MessageWrapper(self.field.message_type).struct_reader_name()
 
 
 class AppenderField(BaseField):
@@ -259,7 +302,11 @@ class MessageWrapper:
         return self.descriptor.name + 'Appender'
 
     def reader_name(self):
+        # TODO: Rename to TableReader
         return self.descriptor.name + 'Reader'
+
+    def struct_reader_name(self):
+        return self.descriptor.name + 'StructReader'
 
     def message_name(self):
         return self.descriptor.full_name.replace('.', '::')
@@ -286,6 +333,11 @@ class MessageWrapper:
         for reader_field in self.reader_fields():
             for reader_member in reader_field.members():
                 yield reader_member
+
+    def struct_reader_members(self) -> Sequence[ClassMember]:
+        for reader_field in self.reader_fields():
+            for array_member in reader_field.struct_reader_members():
+                yield array_member
 
     def reader_fields(self) -> Sequence[ReaderField]:
         for index, field in enumerate(self.descriptor.fields):

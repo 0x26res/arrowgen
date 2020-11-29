@@ -114,9 +114,18 @@ arrow::Status testSearchResult() {
   return arrow::Status::OK();
 }
 
+arrow::Status testNestedMessage() {
+  std::vector<messages::NestedMessage> messages =
+      loadJson<messages::NestedMessage>("messages/NestedMessage.jsonl");
+  return testDataType<messages::NestedMessage, messages::NestedMessageAppender,
+                      messages::NestedMessageReader>(messages);
+  return arrow::Status::OK();
+}
+
 int main(int argc, char **argv) {
   EXIT_ON_FAILURE(testDataRow());
   EXIT_ON_FAILURE(testSearchResult());
   EXIT_ON_FAILURE(testTestMessage());
+  EXIT_ON_FAILURE(testNestedMessage());
   return EXIT_SUCCESS;
 }

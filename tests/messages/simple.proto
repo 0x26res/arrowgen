@@ -67,8 +67,8 @@ message SearchResult {
   ReturnCode return_code = 1;
   string message = 2;
 }
-//
-//message NestedMessage {
-//  ReturnCode return_code = 1;
-//  DataRow data_row = 2;
-//}
+
+message NestedMessage {
+  ReturnCode return_code = 1;
+  DataRow data_row = 2;
+}

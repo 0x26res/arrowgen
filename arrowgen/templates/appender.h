@@ -21,13 +21,29 @@ class {{ wrapper.appender_name() }} {
     arrow::Status Finish(std::shared_ptr<arrow::Array>* array);
 
     private:
-    arrow::Status build(std::shared_ptr<arrow::StructArray>* structArray);
+    arrow::Status build(std::shared_ptr<arrow::StructArray>* struct_array);
     arrow::Status build(arrow::ArrayVector& arrays);
     static std::vector<std::string> getFieldNames();
 
     {% for member in wrapper.appender_members() -%}
     {{member.cpp_type}} {{member.name}};
     {% endfor %}
+};
+
+class {{wrapper.struct_reader_name() }} {
+  public:
+    {{ wrapper.struct_reader_name() }}(std::shared_ptr<arrow::StructArray> struct_array);
+    arrow::Status GetValue(uint64_t const index, {{wrapper.message_name()}}& message) const;
+    uint64_t length() const;
+
+  private:
+    std::shared_ptr<arrow::StructArray> struct_array_;
+    {% for reader_field in wrapper.reader_fields() -%}
+    {% for member in reader_field.struct_reader_members() -%}
+    {{member.cpp_type}} {{member.name}};
+    {% endfor %}
+    {% endfor %}
+
 };
 
 class {{ wrapper.reader_name()}} {
@@ -40,8 +56,8 @@ class {{ wrapper.reader_name()}} {
     std::shared_ptr<arrow::Table> table_;
     uint64_t current_;
 
-    {% for member in wrapper.reader_fields() -%}
-    {% for member in member.members() -%}
+    {% for reader_field in wrapper.reader_fields() -%}
+    {% for member in reader_field.members() -%}
     {{member.cpp_type}} {{member.name}};
     {% endfor %}
     {% endfor %}

@@ -42,7 +42,7 @@ The generated code consist of two classes per message:
 
 # TODO
 
-- [ ] Add support for nested data
+- [ ] Add support for repeated nested data
 - [ ] Stop poluting the source when testing
 - [ ] Discover libraries dynamically when compiling in test
 - [ ] Add CMake for tests ?
@@ -57,3 +57,6 @@ The generated code consist of two classes per message:
 - [ ] Make schema & field vector a static member
 - [ ] use GetColumnByName
 - [ ] add struct array reader
+- [ ] consistent case in functions and members
+- [ ] rationalize wrappers and code generation, better naming for list
+- [ ] go through code TODOs
