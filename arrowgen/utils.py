@@ -2,4 +2,6 @@ import subprocess
 
 
 def run_command(command):
-    subprocess.run(command, check=True, text=True)
+    results = subprocess.run(command, text=True, capture_output=True)
+    if results.returncode != 0:
+        raise RuntimeError(f"Failed with {results.stderr}")
