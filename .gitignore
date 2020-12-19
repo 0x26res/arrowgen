@@ -127,8 +127,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-/tests/messages/simple.appender.cc
-/tests/messages/simple.appender.h
+/tests/messages/simple.arrow.cc
+/tests/messages/simple.arrow.h
 /tests/messages/simple.pb.cc
 /tests/messages/simple.pb.h
 /tests/messages/simple_pb2.py

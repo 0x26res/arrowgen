@@ -4,52 +4,52 @@ from typing import Sequence
 from google.protobuf.descriptor import FileDescriptor, Descriptor, FieldDescriptor
 
 CPP_TYPES = {
-    FieldDescriptor.CPPTYPE_BOOL: 'bool',
-    FieldDescriptor.CPPTYPE_DOUBLE: 'double',
-    FieldDescriptor.CPPTYPE_ENUM: 'int32_t',
-    FieldDescriptor.CPPTYPE_FLOAT: 'float',
-    FieldDescriptor.CPPTYPE_INT32: 'int32_t',
-    FieldDescriptor.CPPTYPE_INT64: 'int64_t',
-    FieldDescriptor.CPPTYPE_STRING: 'std::string',
-    FieldDescriptor.CPPTYPE_UINT32: 'uint32_t',
-    FieldDescriptor.CPPTYPE_UINT64: 'uint64_t',
+    FieldDescriptor.CPPTYPE_BOOL: "bool",
+    FieldDescriptor.CPPTYPE_DOUBLE: "double",
+    FieldDescriptor.CPPTYPE_ENUM: "int32_t",
+    FieldDescriptor.CPPTYPE_FLOAT: "float",
+    FieldDescriptor.CPPTYPE_INT32: "int32_t",
+    FieldDescriptor.CPPTYPE_INT64: "int64_t",
+    FieldDescriptor.CPPTYPE_STRING: "std::string",
+    FieldDescriptor.CPPTYPE_UINT32: "uint32_t",
+    FieldDescriptor.CPPTYPE_UINT64: "uint64_t",
 }
 
 CPP_BUILDERS = {
-    FieldDescriptor.CPPTYPE_BOOL: 'arrow::BooleanBuilder',
-    FieldDescriptor.CPPTYPE_DOUBLE: 'arrow::DoubleBuilder',
-    FieldDescriptor.CPPTYPE_ENUM: 'arrow::Int32Builder',
-    FieldDescriptor.CPPTYPE_FLOAT: 'arrow::FloatBuilder',
-    FieldDescriptor.CPPTYPE_INT32: 'arrow::Int32Builder',
-    FieldDescriptor.CPPTYPE_INT64: 'arrow::Int64Builder',
-    FieldDescriptor.CPPTYPE_STRING: 'arrow::StringBuilder',
-    FieldDescriptor.CPPTYPE_UINT32: 'arrow::UInt32Builder',
-    FieldDescriptor.CPPTYPE_UINT64: 'arrow::UInt64Builder',
+    FieldDescriptor.CPPTYPE_BOOL: "arrow::BooleanBuilder",
+    FieldDescriptor.CPPTYPE_DOUBLE: "arrow::DoubleBuilder",
+    FieldDescriptor.CPPTYPE_ENUM: "arrow::Int32Builder",
+    FieldDescriptor.CPPTYPE_FLOAT: "arrow::FloatBuilder",
+    FieldDescriptor.CPPTYPE_INT32: "arrow::Int32Builder",
+    FieldDescriptor.CPPTYPE_INT64: "arrow::Int64Builder",
+    FieldDescriptor.CPPTYPE_STRING: "arrow::StringBuilder",
+    FieldDescriptor.CPPTYPE_UINT32: "arrow::UInt32Builder",
+    FieldDescriptor.CPPTYPE_UINT64: "arrow::UInt64Builder",
 }
 
 CPP_ARRAYS = {
-    FieldDescriptor.CPPTYPE_BOOL: 'arrow::BooleanArray',
-    FieldDescriptor.CPPTYPE_DOUBLE: 'arrow::DoubleArray',
-    FieldDescriptor.CPPTYPE_ENUM: 'arrow::Int32Array',
-    FieldDescriptor.CPPTYPE_FLOAT: 'arrow::FloatArray',
-    FieldDescriptor.CPPTYPE_INT32: 'arrow::Int32Array',
-    FieldDescriptor.CPPTYPE_INT64: 'arrow::Int64Array',
-    FieldDescriptor.CPPTYPE_MESSAGE: 'arrow::StructArray',
-    FieldDescriptor.CPPTYPE_STRING: 'arrow::StringArray',
-    FieldDescriptor.CPPTYPE_UINT32: 'arrow::UInt32Array',
-    FieldDescriptor.CPPTYPE_UINT64: 'arrow::UInt64Array',
+    FieldDescriptor.CPPTYPE_BOOL: "arrow::BooleanArray",
+    FieldDescriptor.CPPTYPE_DOUBLE: "arrow::DoubleArray",
+    FieldDescriptor.CPPTYPE_ENUM: "arrow::Int32Array",
+    FieldDescriptor.CPPTYPE_FLOAT: "arrow::FloatArray",
+    FieldDescriptor.CPPTYPE_INT32: "arrow::Int32Array",
+    FieldDescriptor.CPPTYPE_INT64: "arrow::Int64Array",
+    FieldDescriptor.CPPTYPE_MESSAGE: "arrow::StructArray",
+    FieldDescriptor.CPPTYPE_STRING: "arrow::StringArray",
+    FieldDescriptor.CPPTYPE_UINT32: "arrow::UInt32Array",
+    FieldDescriptor.CPPTYPE_UINT64: "arrow::UInt64Array",
 }
 
 ARROW_TYPES = {
-    FieldDescriptor.CPPTYPE_BOOL: 'arrow::boolean()',
-    FieldDescriptor.CPPTYPE_DOUBLE: 'arrow::float64()',
-    FieldDescriptor.CPPTYPE_ENUM: 'arrow::int32()',
-    FieldDescriptor.CPPTYPE_FLOAT: 'arrow::float32()',
-    FieldDescriptor.CPPTYPE_INT32: 'arrow::int32()',
-    FieldDescriptor.CPPTYPE_INT64: 'arrow::int64()',
-    FieldDescriptor.CPPTYPE_STRING: 'arrow::utf8()',
-    FieldDescriptor.CPPTYPE_UINT32: 'arrow::uint32()',
-    FieldDescriptor.CPPTYPE_UINT64: 'arrow::uint64()',
+    FieldDescriptor.CPPTYPE_BOOL: "arrow::boolean()",
+    FieldDescriptor.CPPTYPE_DOUBLE: "arrow::float64()",
+    FieldDescriptor.CPPTYPE_ENUM: "arrow::int32()",
+    FieldDescriptor.CPPTYPE_FLOAT: "arrow::float32()",
+    FieldDescriptor.CPPTYPE_INT32: "arrow::int32()",
+    FieldDescriptor.CPPTYPE_INT64: "arrow::int64()",
+    FieldDescriptor.CPPTYPE_STRING: "arrow::utf8()",
+    FieldDescriptor.CPPTYPE_UINT32: "arrow::uint32()",
+    FieldDescriptor.CPPTYPE_UINT64: "arrow::uint64()",
 }
 
 
@@ -69,7 +69,7 @@ class BaseField:
         return self.field.name
 
     def make_name(self, suffix: str):
-        return self.field.name + '_' + suffix + '_'
+        return self.field.name + "_" + suffix + "_"
 
     def is_repeated(self):
         return self.field.label == FieldDescriptor.LABEL_REPEATED
@@ -88,9 +88,9 @@ class BaseField:
 
     def value_type(self):
         if self.is_enum():
-            return self.field.enum_type.full_name.replace('.', '::')
+            return self.field.enum_type.full_name.replace(".", "::")
         elif self.is_message():
-            return self.field.message_type.full_name.replace('.', '::')
+            return self.field.message_type.full_name.replace(".", "::")
         else:
             return CPP_TYPES[self.field.cpp_type]
 
@@ -103,7 +103,7 @@ class BaseField:
 
     def offset_type(self):
         # TODO: implement
-        return 'uint64_t'
+        return "uint64_t"
 
     def schema_statement(self):
         if self.is_repeated():
@@ -119,13 +119,13 @@ class ReaderField(BaseField):
         super().__init__(field, index)
 
     def index_name(self):
-        return self.make_name('index')
+        return self.make_name("index")
 
     def array_name(self):
-        return self.make_name('array')
+        return self.make_name("array")
 
     def list_array_name(self):
-        return self.make_name('list_array')
+        return self.make_name("list_array")
 
     def main_array_name(self):
         if self.is_repeated():
@@ -134,34 +134,34 @@ class ReaderField(BaseField):
             return self.array_name()
 
     def chunk_name(self):
-        return self.make_name('chunk')
+        return self.make_name("chunk")
 
     def list_array_caster(self):
-        return 'std::static_pointer_cast<arrow::ListArray>'
+        return "std::static_pointer_cast<arrow::ListArray>"
 
     def array_caster(self):
-        return f'std::static_pointer_cast<{self.array_type()}>'
+        return f"std::static_pointer_cast<{self.array_type()}>"
 
     def get_array_statement(self):
-        return f'table_->column({self.index})->chunk({self.chunk_name()})'
+        return f"table_->column({self.index})->chunk({self.chunk_name()})"
 
     def length_statement(self):
         if self.is_message():
-            return '.length()'
+            return ".length()"
         else:
-            return '->length()'
+            return "->length()"
 
     def value_reader(self):
         if self.field.cpp_type == FieldDescriptor.CPPTYPE_STRING:
-            return 'GetString'
+            return "GetString"
         else:
-            return 'Value'
+            return "Value"
 
     def optional_cast(self):
         if self.is_enum():
-            return f'({self.value_type()})'
+            return f"({self.value_type()})"
         else:
-            return ''
+            return ""
 
     def array_type(self):
         return CPP_ARRAYS[self.field.cpp_type]
@@ -170,52 +170,52 @@ class ReaderField(BaseField):
         if self.is_repeated():
             yield ClassMember(
                 self.list_array_name(),
-                f'std::shared_ptr<arrow::ListArray>',
-                f'{self.list_array_caster()}(struct_array_->GetFieldByName("{self.name()}"))'
+                f"std::shared_ptr<arrow::ListArray>",
+                f'{self.list_array_caster()}(struct_array_->GetFieldByName("{self.name()}"))',
             )
             yield ClassMember(
                 self.array_name(),
-                f'std::shared_ptr<{self.array_type()}>',
-                f'{self.array_caster()}({self.list_array_name()}->values())'
+                f"std::shared_ptr<{self.array_type()}>",
+                f"{self.array_caster()}({self.list_array_name()}->values())",
             )
         elif self.is_message():
             yield ClassMember(
                 self.array_name(),
                 self.struct_reader_type(),
-                f'{self.array_caster()}(struct_array_->GetFieldByName("{self.name()}"))'
+                f'{self.array_caster()}(struct_array_->GetFieldByName("{self.name()}"))',
             )
         else:
             yield ClassMember(
                 self.array_name(),
-                f'std::shared_ptr<{CPP_ARRAYS[self.field.cpp_type]}>',
-                f'{self.array_caster()}(struct_array_->GetFieldByName("{self.name()}"))'
+                f"std::shared_ptr<{CPP_ARRAYS[self.field.cpp_type]}>",
+                f'{self.array_caster()}(struct_array_->GetFieldByName("{self.name()}"))',
             )
 
     def members(self) -> Sequence[ClassMember]:
-        yield ClassMember(self.chunk_name(), 'uint64_t', '0')
-        yield ClassMember(self.index_name(), 'uint64_t', '0')
+        yield ClassMember(self.chunk_name(), "uint64_t", "0")
+        yield ClassMember(self.index_name(), "uint64_t", "0")
         if self.is_repeated():
             yield ClassMember(
                 self.list_array_name(),
-                f'std::shared_ptr<arrow::ListArray>',
-                f'{self.list_array_caster()}({self.get_array_statement()})'
+                f"std::shared_ptr<arrow::ListArray>",
+                f"{self.list_array_caster()}({self.get_array_statement()})",
             )
             yield ClassMember(
                 self.array_name(),
-                f'std::shared_ptr<{self.array_type()}>',
-                f'{self.array_caster()}({self.list_array_name()}->values())'
+                f"std::shared_ptr<{self.array_type()}>",
+                f"{self.array_caster()}({self.list_array_name()}->values())",
             )
         elif self.is_message():
             yield ClassMember(
                 self.array_name(),
                 self.struct_reader_type(),
-                f'{self.array_caster()}({self.get_array_statement()})'
+                f"{self.array_caster()}({self.get_array_statement()})",
             )
         else:
             yield ClassMember(
                 self.array_name(),
-                f'std::shared_ptr<{CPP_ARRAYS[self.field.cpp_type]}>',
-                f'{self.array_caster()}({self.get_array_statement()})'
+                f"std::shared_ptr<{CPP_ARRAYS[self.field.cpp_type]}>",
+                f"{self.array_caster()}({self.get_array_statement()})",
             )
 
     def struct_reader_type(self):
@@ -228,13 +228,13 @@ class AppenderField(BaseField):
         super().__init__(field, index)
 
     def builder_name(self):
-        return self.field.name + '_builder_'
+        return self.field.name + "_builder_"
 
     def array_name(self):
-        return self.field.name + '_array'
+        return self.field.name + "_array"
 
     def list_builder_name(self):
-        return self.field.name + '_list_builder_'
+        return self.field.name + "_list_builder_"
 
     def builder_type(self):
         if self.is_message():
@@ -250,18 +250,15 @@ class AppenderField(BaseField):
             yield ClassMember(
                 self.list_builder_name(),
                 "arrow::ListBuilder",
-                f'pool, std::make_shared<{self.builder_type()}>(pool)')
+                f"pool, std::make_shared<{self.builder_type()}>(pool)",
+            )
             yield ClassMember(
                 self.builder_name(),
-                self.builder_type() + '&',
-                f'*(static_cast < {self.builder_type()} * > ({self.list_builder_name()}.value_builder()))'
+                self.builder_type() + "&",
+                f"*(static_cast < {self.builder_type()} * > ({self.list_builder_name()}.value_builder()))",
             )
         else:
-            yield ClassMember(
-                self.builder_name(),
-                self.builder_type(),
-                'pool'
-            )
+            yield ClassMember(self.builder_name(), self.builder_type(), "pool")
 
     def append_statements(self):
         if self.is_repeated():
@@ -269,9 +266,9 @@ class AppenderField(BaseField):
             if self.is_boolean():
                 yield f"ARROW_RETURN_NOT_OK({self.builder_name()}.AppendValues(message.{self.name()}().begin(), message.{self.name()}().end()));"
             elif self.is_string():
-                yield f"for (std::string const& value : message.{self.name()}()) " + '{'
-                yield f'  {self.builder_name()}.Append(value);'
-                yield '}'
+                yield f"for (std::string const& value : message.{self.name()}()) " + "{"
+                yield f"  {self.builder_name()}.Append(value);"
+                yield "}"
             else:
                 yield f"ARROW_RETURN_NOT_OK({self.builder_name()}.AppendValues(message.{self.name()}().data(), message.{self.name()}().size()));"
         elif self.is_message():
@@ -280,34 +277,33 @@ class AppenderField(BaseField):
             yield f"ARROW_RETURN_NOT_OK({self.builder_name()}.Append(message.{self.name()}()));"
 
     def finish_statements(self):
-        yield f'std::shared_ptr<arrow::Array> {self.array_name()};'
+        yield f"std::shared_ptr<arrow::Array> {self.array_name()};"
         if self.is_repeated():
-            yield f'ARROW_RETURN_NOT_OK({self.list_builder_name()}.Finish(&{self.array_name()}));'
+            yield f"ARROW_RETURN_NOT_OK({self.list_builder_name()}.Finish(&{self.array_name()}));"
         else:
-            yield f'ARROW_RETURN_NOT_OK({self.builder_name()}.Finish(&{self.array_name()}));'
-        yield f'arrays.push_back({self.array_name()});'
+            yield f"ARROW_RETURN_NOT_OK({self.builder_name()}.Finish(&{self.array_name()}));"
+        yield f"arrays.push_back({self.array_name()});"
 
 
 class MessageWrapper:
-
     def __init__(self, descriptor: Descriptor):
         self.descriptor = descriptor
 
     def header(self):
-        return self.descriptor.file.name[:-5] + 'pb.h'
+        return self.descriptor.file.name[:-5] + "pb.h"
 
     def appender_name(self):
-        return self.descriptor.name + 'Appender'
+        return self.descriptor.name + "Appender"
 
     def reader_name(self):
         # TODO: Rename to TableReader
-        return self.descriptor.name + 'Reader'
+        return self.descriptor.name + "Reader"
 
     def struct_reader_name(self):
-        return self.descriptor.name + 'StructReader'
+        return self.descriptor.name + "StructReader"
 
     def message_name(self):
-        return self.descriptor.full_name.replace('.', '::')
+        return self.descriptor.full_name.replace(".", "::")
 
     def append_statements(self):
         for field in self.appender_fields():
@@ -325,7 +321,7 @@ class MessageWrapper:
 
     def arrays(self):
         for field in self.descriptor.fields:
-            yield f'{field.name}_array'
+            yield f"{field.name}_array"
 
     def reader_members(self) -> Sequence[ClassMember]:
         for reader_field in self.reader_fields():
@@ -360,19 +356,19 @@ class FileWrapper:
         self.descriptor = descriptor
 
     def message_header(self):
-        return self.descriptor.name[:-5] + 'pb.h'
+        return self.descriptor.name[:-5] + "pb.h"
 
     def appender_header(self):
-        return self.descriptor.name[:-5] + 'appender.h'
+        return self.descriptor.name[:-5] + "arrow.h"
 
     def appender_source(self):
-        return self.descriptor.name[:-5] + 'appender.cc'
+        return self.descriptor.name[:-5] + "arrow.cc"
 
     def name(self):
         return self.descriptor.name
 
     def namespaces(self):
-        return self.descriptor.package.split('.')
+        return self.descriptor.package.split(".")
 
     def message_wrappers(self):
         for message in self.descriptor.message_types_by_name.values():

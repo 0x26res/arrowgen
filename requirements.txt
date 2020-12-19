@@ -1,3 +1,4 @@
 
 protobuf==3.14.0
 jinja2==2.11.2
+black==20.8b1
