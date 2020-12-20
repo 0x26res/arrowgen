@@ -1,5 +1,6 @@
 import importlib
 import pkgutil
+import subprocess
 from typing import Dict, Tuple
 
 from google.protobuf.descriptor import FileDescriptor
@@ -7,6 +8,19 @@ from jinja2 import Template
 
 from arrowgen.utils import run_command
 from arrowgen.wrappers import FileWrapper
+
+
+def clang_format(code: str) -> str:
+    results = subprocess.run(
+        ["clang-format"],
+        input=code,
+        text=True,
+        capture_output=True,
+    )
+    if results.returncode != 0:
+        raise RuntimeError(results.stderr)
+    else:
+        return results.stdout
 
 
 def generate_for_descriptor(file_descriptor: FileDescriptor) -> Dict[str, str]:
@@ -22,8 +36,11 @@ def generate_for_descriptor(file_descriptor: FileDescriptor) -> Dict[str, str]:
     source_template = pkgutil.get_data(__name__, "templates/arrow.cc").decode("utf-8")
     source = Template(source_template).render(file_wrapper=wrapper)
     # TODO: format in place
-    # run_command(['clang-format', '-i', wrapper.appender_header(), wrapper.appender_source()])
-    return {wrapper.appender_header(): header, wrapper.appender_source(): source}
+
+    return {
+        wrapper.appender_header(): clang_format(header),
+        wrapper.appender_source(): clang_format(source),
+    }
 
 
 def write_files(content: Dict[str, str]) -> Tuple[str]:

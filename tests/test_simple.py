@@ -3,10 +3,10 @@ from unittest import TestCase
 
 from google.protobuf.json_format import MessageToJson
 
-from arrowgen.generator import generate_for_descriptor
+from arrowgen.generator import generate_for_descriptor, clang_format
+from arrowgen.utils import run_command
 from tests.messages.simple_pb2 import SearchRequest, DataRow
 from tests.test_utils import generate_data
-from arrowgen.utils import run_command
 
 
 class TestDataGen(TestCase):
@@ -24,7 +24,7 @@ def _prepare_data(module):
                 fp.write("\n")
 
 
-class TestGenerator(TestCase):
+class GeneratorTest(TestCase):
     def test_generate(self):
         run_command(
             [
@@ -51,3 +51,13 @@ class TestGenerator(TestCase):
             ]
         )
         run_command(["./a.out"])
+
+
+class ClangFormatTest(TestCase):
+    def test_clang(self):
+        results = clang_format('#include    "foo.h"')
+        self.assertEqual('#include "foo.h"', results)
+
+    def test_clang_bad(self):
+        results = clang_format("!!! this is not C++ \n\n\n\n")
+        self.assertEqual("!!!this is not C++\n", results)
