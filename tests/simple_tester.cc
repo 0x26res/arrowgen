@@ -89,6 +89,12 @@ arrow::Status testDataType(std::vector<T> const data) {
   }
   arrow::Status status2 = ::compare<T, R>(table2, data2);
   ARROW_RETURN_NOT_OK(status2);
+  // Test with binary protocol
+  for (T const& message : data) {
+    std::string value;
+    message.SerializeToString(&value);
+    ARROW_RETURN_NOT_OK(appender.append(value.c_str(), value.size()));
+  }
   return arrow::Status::OK();
 }
 

@@ -43,7 +43,7 @@ def generate_for_descriptor(file_descriptor: FileDescriptor) -> Dict[str, str]:
     }
 
 
-def write_files(content: Dict[str, str]) -> Tuple[str]:
+def write_files(content: Dict[str, str]) -> Tuple[str, str]:
     for file_name, file_content in content.items():
         with (open(file_name, "w")) as fp:
             fp.write(file_content)

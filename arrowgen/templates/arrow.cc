@@ -14,6 +14,15 @@ namespace {{namespace}} {
 {
 }
 
+arrow::Status {{wrapper.appender_name()}}::append(const char* bytes, size_t size) {
+  {{wrapper.message_name()}} message;
+  if (!message.ParseFromArray(bytes, size)) {
+    return arrow::Status::SerializationError("Could not serialize {{wrapper.message_name()}}");
+  } else {
+    return this->append(message);
+  }
+}
+
 arrow::Status {{wrapper.appender_name()}}::append({{wrapper.message_name()}} const& message) {
     {% for append_statement in wrapper.append_statements() -%}
     {{ append_statement }}

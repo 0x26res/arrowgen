@@ -42,6 +42,7 @@ The generated code consist of two classes per message:
 
 # TODO
 
+- [ ] Handle missing values
 - [ ] Add support for repeated nested data
 - [ ] Stop poluting the source when testing
 - [ ] Discover libraries dynamically when compiling in test
@@ -60,3 +61,4 @@ The generated code consist of two classes per message:
 - [ ] consistent case in functions and members
 - [ ] rationalize wrappers and code generation, better naming for list
 - [ ] go through code TODOs
+- [ ] Add proper C++ unit test

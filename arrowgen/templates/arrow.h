@@ -16,6 +16,7 @@ class {{ wrapper.appender_name() }} {
     static arrow::FieldVector getFieldVector();
 
     explicit {{ wrapper.appender_name() }}(arrow::MemoryPool *pool = arrow::default_memory_pool());
+    arrow::Status append(const char* bytes, size_t size);
     arrow::Status append({{wrapper.message_name()}} const& message);
     arrow::Status build(std::shared_ptr<arrow::Table>* table);
     arrow::Status Finish(std::shared_ptr<arrow::Array>* array);
