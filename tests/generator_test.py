@@ -5,7 +5,7 @@ from google.protobuf.json_format import MessageToJson
 
 from arrowgen.generator import generate_for_descriptor, write_files
 from arrowgen.utils import run_command
-from tests.test_utils import generate_data
+from tests.data_generator import generate_data, generate_for_file_descriptor
 
 
 def _get_simple_proto_module():
@@ -40,7 +40,7 @@ class TestDataGen(unittest.TestCase):
 class GeneratorTest(unittest.TestCase):
     def test_generate(self):
         simple = _get_simple_proto_module()
-        _prepare_data(simple.DESCRIPTOR)
+        generate_for_file_descriptor(simple.DESCRIPTOR, "./messages", 10)
         files = generate_for_descriptor(simple.DESCRIPTOR)
         header, source = write_files(files)
         run_command(

@@ -1,6 +1,18 @@
+import argparse
+import os
+import pathlib
 import random
+from typing import List
 
-from google.protobuf.descriptor import FieldDescriptor, EnumDescriptor, Descriptor
+from google.protobuf.descriptor import (
+    FieldDescriptor,
+    EnumDescriptor,
+    Descriptor,
+    FileDescriptor,
+)
+from google.protobuf.json_format import MessageToJson
+
+from arrowgen.generator import get_file_descriptor
 
 VALID_DATA = {FieldDescriptor.TYPE_BYTES: [b"1", b"foo", b"\n"]}
 
@@ -68,3 +80,42 @@ def _generate_data(field: FieldDescriptor):
 
 def _generate_enum(enum: EnumDescriptor):
     return random.choice(enum.values).index
+
+
+def generate_for_file(file: str, output_dir: str, count: int = 10) -> List[str]:
+    file_descriptor = get_file_descriptor(file)
+    return generate_for_file_descriptor(file_descriptor, output_dir, count)
+
+
+def generate_for_file_descriptor(
+    file_descriptor: FileDescriptor, output_dir: str, count: int
+) -> List[str]:
+    results = []
+    pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+    for message in file_descriptor.message_types_by_name.values():
+        data = [generate_data(message) for _ in range(count)]
+        file_name = os.path.join(output_dir, message.name + ".jsonl")
+        results.append(file_name)
+
+        with open(file_name, "w") as fp:
+            for d in data:
+                fp.write(MessageToJson(d, indent=0).replace("\n", ""))
+                fp.write("\n")
+
+    return results
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Generate code to convert Google Protocol Buffers to Arrow Table"
+    )
+    parser.add_argument("--proto_file", type=str, help="Input .proto file")
+    parser.add_argument("--output_dir", type=str, default="./", help="Output directory")
+    parser.add_argument("--count", type=int, default=10, help="Output directory")
+    args = parser.parse_args()
+    files = generate_for_file(args.proto_file, args.output_dir, args.count)
+    print(f"{args.proto_file} generated {' '.join(files)}")
+
+
+if __name__ == "__main__":
+    main()

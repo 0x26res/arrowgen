@@ -2,6 +2,7 @@ import importlib
 import pathlib
 import pkgutil
 import subprocess
+import tempfile
 from typing import Dict, Tuple
 
 from google.protobuf.descriptor import FileDescriptor
@@ -52,19 +53,26 @@ def write_files(content: Dict[str, str]) -> Tuple[str, str]:
     return tuple(content.keys())
 
 
+def get_file_descriptor(proto_file: str) -> FileDescriptor:
+    with tempfile.TemporaryDirectory() as tempdir:
+        include = pathlib.Path(proto_file).parent.as_posix()
+        run_command(
+            [
+                "protoc",
+                "--proto_path=" + include,
+                proto_file,
+                "--python_out=" + tempdir,
+            ]
+        )
+        python_file = os.path.join(
+            tempdir, os.path.basename(proto_file[:-6]) + "_pb2.py"
+        )
+        spec = importlib.util.spec_from_file_location("module.name", python_file)
+        proto_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(proto_module)
+        return proto_module.DESCRIPTOR
+
+
 def generate_for_file(proto_file: str) -> Tuple[str, str]:
-    include = pathlib.Path(proto_file).parent.as_posix()
-    run_command(
-        [
-            "protoc",
-            "--proto_path=" + include,
-            proto_file,
-            "--cpp_out=./",
-            "--python_out=./",
-        ]
-    )
-    python_file = os.path.basename(proto_file[:-6]) + "_pb2.py"
-    spec = importlib.util.spec_from_file_location("module.name", python_file)
-    proto_module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(proto_module)
-    return write_files(generate_for_descriptor(proto_module.DESCRIPTOR))
+    file_descriptor = get_file_descriptor(proto_file)
+    return write_files(generate_for_descriptor(file_descriptor))
