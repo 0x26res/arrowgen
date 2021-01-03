@@ -356,13 +356,16 @@ class FileWrapper:
         self.descriptor = descriptor
 
     def message_header(self):
-        return self.descriptor.name[:-5] + "pb.h"
+        return self.base_name() + ".pb.h"
 
     def appender_header(self):
-        return self.descriptor.name[:-5] + "arrow.h"
+        return self.base_name() + ".arrow.h"
 
     def appender_source(self):
-        return self.descriptor.name[:-5] + "arrow.cc"
+        return self.base_name() + ".arrow.cc"
+
+    def base_name(self) -> str:
+        return self.descriptor.name[:-6]
 
     def name(self):
         return self.descriptor.name
@@ -373,3 +376,10 @@ class FileWrapper:
     def message_wrappers(self):
         for message in self.descriptor.message_types_by_name.values():
             yield MessageWrapper(message)
+
+    def include_guard_name(self):
+        return (
+            self.descriptor.package.replace(".", "_").upper()
+            + "_"
+            + self.base_name().upper()
+        )

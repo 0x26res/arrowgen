@@ -1,4 +1,5 @@
-#pragma ONCE
+#ifndef {{ file_wrapper.include_guard_name() }}
+#define {{ file_wrapper.include_guard_name() }}
 
 // Source: {{file_wrapper.name() }}
 // Generated code, do not modify
@@ -71,3 +72,5 @@ class {{ wrapper.reader_name()}} {
 {% for namespace in file_wrapper.namespaces()[::-1] -%}
 } // namespace {{namespace}}
 {% endfor %}
+
+#endif

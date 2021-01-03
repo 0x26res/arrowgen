@@ -11,10 +11,5 @@ sudo apt install -y libsnappy-dev libbrotli-dev libssl-dev liblz4-dev libzstd-de
 
 ## TODO:
 
-- [ ] Automate the generation of the arrow file
-- [ ] Automate the generation of test data
-- [ ] Replace pragma once
-- [ ] standard includes
 - [ ] replicate [this](https://github.com/albertchan/cmake-boost-demo) structure
-- [ ] enable -Werror
-- [ ] clang format
+- [ ] enable -Werror and -Wall
