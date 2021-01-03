@@ -12,7 +12,7 @@ def _get_simple_proto_module():
     run_command(
         [
             "protoc",
-            "-I=./",
+            "--proto_path=./",
             "./messages/simple.proto",
             "--cpp_out=./",
             "--python_out=./",

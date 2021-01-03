@@ -13,7 +13,7 @@ pip install -r requirements.txt
 ```
 ## Run the Generator
 ```bash
-python arrogen/__main__.py <proto file>
+python arrowgen/__main__.py <proto file>
 ```
 This will output the location of the header and source file that have been generated
 

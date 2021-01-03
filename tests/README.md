@@ -8,7 +8,7 @@ Tests use a sample proto file to:
 ## Tips
 
 ```bash
-protoc -I=./ ./messages/simple.proto  --cpp_out=./ --python_out=./
+protoc --proto_path=./ ./messages/simple.proto  --cpp_out=./ --python_out=./
 ```
 
 ```

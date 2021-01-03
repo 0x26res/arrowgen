@@ -1,5 +1,4 @@
 import argparse
-import sys
 
 from arrowgen.generator import generate_for_file
 

@@ -137,3 +137,4 @@ dmypy.json
 
 # Project specific
 *.jsonl
+/cpp/cmake-build-debug/
