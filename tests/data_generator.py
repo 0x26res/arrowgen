@@ -109,7 +109,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Generate code to convert Google Protocol Buffers to Arrow Table"
     )
-    parser.add_argument("--proto_file", type=str, help="Input .proto file")
+    parser.add_argument("proto_file", type=str, help="Input .proto file")
     parser.add_argument("--output_dir", type=str, default="./", help="Output directory")
     parser.add_argument("--count", type=int, default=10, help="Output directory")
     args = parser.parse_args()

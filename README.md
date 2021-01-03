@@ -58,3 +58,4 @@ The generated code consist of two classes per message:
 - [ ] consistent case in functions and members
 - [ ] rationalize wrappers and code generation, better naming for list
 - [ ] go through code TODOs
+- [ ] change command to be consistent with protoc

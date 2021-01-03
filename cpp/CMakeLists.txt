@@ -30,7 +30,7 @@ add_custom_command(
 
 add_custom_target(
         NAME ALL
-        COMMAND ${PYTHON} ${ARROWGEN}/tests/data_generator.py --proto_file=${CMAKE_SOURCE_DIR}/simple.proto --output_dir=${CMAKE_BINARY_DIR}/data
+        COMMAND ${PYTHON} ${ARROWGEN}/tests/data_generator.py ${CMAKE_SOURCE_DIR}/simple.proto --output_dir=${CMAKE_BINARY_DIR}/data
         DEPENDS ${CMAKE_SOURCE_DIR}/simple.proto
 )
 
