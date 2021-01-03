@@ -42,18 +42,15 @@ The generated code consist of two classes per message:
 
 # TODO
 
-- [ ] Handle missing values
 - [ ] Add support for repeated nested data
-- [ ] Stop poluting the source when testing
+- [ ] Stop poluting the source when testing -> disable existing test
 - [ ] Discover libraries dynamically when compiling in test
-- [ ] Add CMake for tests ?
 - [ ] Add documentation (type mapping)
 - [ ] Add support for maps
-- [ ] Improve docs
-- [ ] Use TypeTraits
+- [ ] Improve docs (add simple example)
+- [ ] Use TypeTraits for tests
 - [ ] Work column by column?
 - [ ] Add classifiers
-- [ ] Rename generated file to arrow (instead of appender)
 - [ ] try to publish to pypi for real
 - [ ] Make schema & field vector a static member
 - [ ] use GetColumnByName
@@ -61,4 +58,3 @@ The generated code consist of two classes per message:
 - [ ] consistent case in functions and members
 - [ ] rationalize wrappers and code generation, better naming for list
 - [ ] go through code TODOs
-- [ ] Add proper C++ unit test
