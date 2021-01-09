@@ -42,17 +42,3 @@ class GeneratorTest(unittest.TestCase):
         simple = _get_simple_proto_module()
         generate_for_file_descriptor(simple.DESCRIPTOR, "./messages", 10)
         files = generate_for_descriptor(simple.DESCRIPTOR)
-        header, source = write_files(files)
-        run_command(
-            [
-                "g++",
-                "-g",
-                "-I./",
-                "simple_tester.cc",
-                source,
-                "messages/simple.pb.cc",
-                "/usr/lib/x86_64-linux-gnu/libarrow.so.200",
-                "/usr/lib/x86_64-linux-gnu/libprotobuf.so",
-            ]
-        )
-        run_command(["./a.out"])
