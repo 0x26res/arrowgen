@@ -23,7 +23,7 @@ class {{ wrapper.appender_name() }} {
     arrow::Status build(std::shared_ptr<arrow::Table>* table);
     arrow::Status Finish(std::shared_ptr<arrow::Array>* array);
 
-//    std::vector<std::shared_ptr<arrow::ArrayBuilder>> getBuilders();
+    std::vector<std::shared_ptr<arrow::ArrayBuilder>> getBuilders();
 
     private:
     arrow::Status build(std::shared_ptr<arrow::StructArray>* struct_array);

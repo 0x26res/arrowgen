@@ -46,13 +46,19 @@ const arrow::FieldVector {{wrapper.appender_name()}}::FIELD_VECTOR = {
 };
 
 
-//std::vector<std::shared_ptr<arrow::ArrayBuilder>> {{wrapper.appender_name()}}::getBuilders() {
-//  return {
-//    {% for field in wrapper.appender_fields() -%}
-//      std::static_pointer_cast<arrow::StringArray>(this->{{field.builder_name()}}),
-//    {% endfor %}
-//  };
-//}
+std::vector<std::shared_ptr<arrow::ArrayBuilder>> {{wrapper.appender_name()}}::getBuilders() {
+  std::vector<std::shared_ptr<arrow::ArrayBuilder>> results;
+  {% for field in wrapper.appender_fields() -%}
+  {% if field.is_message() -%}
+  for(std::shared_ptr<arrow::ArrayBuilder> const& array_builder : this->{{field.main_builder_name()}}->getBuilders()) {
+    results.push_back(array_builder);
+  }
+  {% else -%}
+  results.push_back(this->{{field.main_builder_name()}});
+  {% endif %}
+  {% endfor -%}
+  return results;
+}
 
 arrow::Status {{wrapper.appender_name()}}::build(std::shared_ptr<arrow::Table> * table) {
     arrow::ArrayVector arrays;

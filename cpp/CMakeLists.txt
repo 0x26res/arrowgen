@@ -37,7 +37,7 @@ add_custom_target(
 
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
-ADD_EXECUTABLE(test_exe test.cpp arrow_example.cpp ${PROTO_SRC} simple.arrow.cc)
+ADD_EXECUTABLE(test_exe test.cpp test_arrow_example.cpp arrow_example.cpp ${PROTO_SRC} simple.arrow.cc)
 TARGET_LINK_LIBRARIES(test_exe PRIVATE ${Protobuf_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} arrow_shared)
 
 ENABLE_TESTING()

@@ -8,7 +8,6 @@
 #include <boost/test/unit_test.hpp>
 #include <google/protobuf/util/json_util.h>
 
-#include "arrow_example.h"
 #include <simple.arrow.h>
 #include <simple.pb.h>
 
@@ -145,20 +144,3 @@ BOOST_AUTO_TEST_CASE(test_build_works) {
 
 BOOST_AUTO_TEST_SUITE_END()
 
-BOOST_AUTO_TEST_SUITE(TestArrowExample)
-
-BOOST_AUTO_TEST_CASE(test_example) {
-  std::vector<data_row> rows = {
-      {1, 1.0, {1.0}}, {2, 2.0, {1.0, 2.0}}, {3, 3.0, {1.0, 2.0, 3.0}}};
-
-  std::shared_ptr<arrow::Table> table;
-  BOOST_REQUIRE_EQUAL(arrow::Status::OK(), VectorToColumnarTable(rows, &table));
-
-  std::vector<data_row> expected_rows;
-  BOOST_REQUIRE_EQUAL(arrow::Status::OK(),
-                      ColumnarTableToVector(table, &expected_rows));
-
-  assert(rows.size() == expected_rows.size());
-}
-
-BOOST_AUTO_TEST_SUITE_END()

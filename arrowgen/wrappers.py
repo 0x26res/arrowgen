@@ -59,6 +59,13 @@ class ClassMember:
     cpp_type: str
     initializer: str
 
+    def to_shared_ptr(self):
+        return ClassMember(
+            name=self.name,
+            cpp_type=f"std::shared_ptr<{self.cpp_type}>",
+            initializer=f"std::make_shared<{self.cpp_type}>({self.initializer})",
+        )
+
 
 class BaseField:
     def __init__(self, field: FieldDescriptor, index: int):
@@ -241,6 +248,12 @@ class AppenderField(BaseField):
     def list_builder_name(self):
         return self.field.name + "_list_builder_"
 
+    def main_builder_name(self):
+        if self.is_repeated():
+            return self.list_builder_name()
+        else:
+            return self.builder_name()
+
     def builder_type(self):
         if self.is_message():
             return self.appender_type()
@@ -256,37 +269,41 @@ class AppenderField(BaseField):
                 self.list_builder_name(),
                 "arrow::ListBuilder",
                 f"pool, std::make_shared<{self.builder_type()}>(pool)",
-            )
+            ).to_shared_ptr()
             yield ClassMember(
                 self.builder_name(),
-                self.builder_type() + "&",
-                f"*(static_cast < {self.builder_type()} * > ({self.list_builder_name()}.value_builder()))",
+                self.builder_type() + "*",
+                f"(static_cast < {self.builder_type()} * > ({self.list_builder_name()}->value_builder()))",
             )
         else:
-            yield ClassMember(self.builder_name(), self.builder_type(), "pool")
+            yield ClassMember(
+                self.builder_name(), self.builder_type(), "pool"
+            ).to_shared_ptr()
 
     def append_statements(self):
-        if self.is_repeated():
-            yield f"ARROW_RETURN_NOT_OK({self.list_builder_name()}.Append());"
+        if self.is_repeated_message():
+            raise RuntimeError("Not implemented yet")
+        elif self.is_repeated():
+            yield f"ARROW_RETURN_NOT_OK({self.list_builder_name()}->Append());"
             if self.is_boolean():
-                yield f"ARROW_RETURN_NOT_OK({self.builder_name()}.AppendValues(message.{self.name()}().begin(), message.{self.name()}().end()));"
+                yield f"ARROW_RETURN_NOT_OK({self.builder_name()}->AppendValues(message.{self.name()}().begin(), message.{self.name()}().end()));"
             elif self.is_string():
                 yield f"for (std::string const& value : message.{self.name()}()) " + "{"
-                yield f"  {self.builder_name()}.Append(value);"
+                yield f"  {self.builder_name()}->Append(value);"
                 yield "}"
             else:
-                yield f"ARROW_RETURN_NOT_OK({self.builder_name()}.AppendValues(message.{self.name()}().data(), message.{self.name()}().size()));"
+                yield f"ARROW_RETURN_NOT_OK({self.builder_name()}->AppendValues(message.{self.name()}().data(), message.{self.name()}().size()));"
         elif self.is_message():
-            yield f"ARROW_RETURN_NOT_OK({self.builder_name()}.append(message.{self.name()}()));"
+            yield f"ARROW_RETURN_NOT_OK({self.builder_name()}->append(message.{self.name()}()));"
         else:
-            yield f"ARROW_RETURN_NOT_OK({self.builder_name()}.Append(message.{self.name()}()));"
+            yield f"ARROW_RETURN_NOT_OK({self.builder_name()}->Append(message.{self.name()}()));"
 
     def finish_statements(self):
         yield f"std::shared_ptr<arrow::Array> {self.array_name()};"
         if self.is_repeated():
-            yield f"ARROW_RETURN_NOT_OK({self.list_builder_name()}.Finish(&{self.array_name()}));"
+            yield f"ARROW_RETURN_NOT_OK({self.list_builder_name()}->Finish(&{self.array_name()}));"
         else:
-            yield f"ARROW_RETURN_NOT_OK({self.builder_name()}.Finish(&{self.array_name()}));"
+            yield f"ARROW_RETURN_NOT_OK({self.builder_name()}->Finish(&{self.array_name()}));"
         yield f"arrays.push_back({self.array_name()});"
 
 

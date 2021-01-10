@@ -26,7 +26,6 @@ arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table>& table,
                                     std::vector<struct data_row>* rows);
 
 struct nested_repeated {
-  int64_t id;
   std::vector<data_row> rows;
 };
 
