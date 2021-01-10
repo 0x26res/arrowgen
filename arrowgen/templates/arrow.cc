@@ -39,20 +39,25 @@ arrow::Status {{wrapper.appender_name()}}::build(arrow::ArrayVector& arrays) {
 }
 
 
-arrow::FieldVector {{wrapper.appender_name()}}::getFieldVector() {
-    // TODO: make this a static member
-    return {
-        {% for schema_statement in wrapper.schema_statements() -%}
-        {{schema_statement}}{{ "," if not loop.last }}
-        {% endfor %}
-    };
-}
+const arrow::FieldVector {{wrapper.appender_name()}}::FIELD_VECTOR = {
+    {% for schema_statement in wrapper.schema_statements() -%}
+    {{schema_statement}}{{ "," if not loop.last }}
+    {% endfor %}
+};
 
+
+//std::vector<std::shared_ptr<arrow::ArrayBuilder>> {{wrapper.appender_name()}}::getBuilders() {
+//  return {
+//    {% for field in wrapper.appender_fields() -%}
+//      std::static_pointer_cast<arrow::StringArray>(this->{{field.builder_name()}}),
+//    {% endfor %}
+//  };
+//}
 
 arrow::Status {{wrapper.appender_name()}}::build(std::shared_ptr<arrow::Table> * table) {
     arrow::ArrayVector arrays;
     ARROW_RETURN_NOT_OK(this->build(arrays));
-    std::shared_ptr<arrow::Schema> schema = std::make_shared<arrow::Schema>(getFieldVector());
+    std::shared_ptr<arrow::Schema> schema = std::make_shared<arrow::Schema>({{wrapper.appender_name()}}::FIELD_VECTOR);
     *table = arrow::Table::Make(
         schema,
         arrays
@@ -67,20 +72,19 @@ arrow::Status {{wrapper.appender_name()}}::Finish(std::shared_ptr<arrow::Array>*
     return arrow::Status::OK();
 }
 
-std::vector<std::string> {{wrapper.appender_name()}}::getFieldNames() {
-    return {
-        {% for field_name in wrapper.field_names() -%}
-        "{{ field_name }}"{{ "," if not loop.last }}
-        {% endfor %}
-    };
-}
+const std::vector<std::string> {{wrapper.appender_name()}}::FIELD_NAMES = {
+    {% for field_name in wrapper.field_names() -%}
+    "{{ field_name }}"{{ "," if not loop.last }}
+    {% endfor %}
+};
+
 
 arrow::Status {{wrapper.appender_name()}}::build(std::shared_ptr<arrow::StructArray> * struct_array) {
     arrow::ArrayVector arrays;
     ARROW_RETURN_NOT_OK(this->build(arrays));
-    std::shared_ptr<arrow::Schema> schema = std::make_shared<arrow::Schema>(getFieldVector());
+    std::shared_ptr<arrow::Schema> schema = std::make_shared<arrow::Schema>({{wrapper.appender_name()}}::FIELD_VECTOR);
 
-    arrow::Result<std::shared_ptr<arrow::StructArray>> result = arrow::StructArray::Make(arrays, getFieldNames());
+    arrow::Result<std::shared_ptr<arrow::StructArray>> result = arrow::StructArray::Make(arrays, {{wrapper.appender_name()}}::FIELD_NAMES);
     ARROW_RETURN_NOT_OK(result.status());
     *struct_array = result.ValueUnsafe();
     return arrow::Status::OK();

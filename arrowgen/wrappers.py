@@ -71,6 +71,9 @@ class BaseField:
     def make_name(self, suffix: str):
         return self.field.name + "_" + suffix + "_"
 
+    def is_repeated_message(self):
+        return self.is_repeated() and self.is_message()
+
     def is_repeated(self):
         return self.field.label == FieldDescriptor.LABEL_REPEATED
 
@@ -106,10 +109,12 @@ class BaseField:
         return "uint64_t"
 
     def schema_statement(self):
-        if self.is_repeated():
+        if self.is_repeated_message():
+            return f'arrow::field("{self.name()}", arrow::list(arrow::struct_({self.appender_type()}::FIELD_VECTOR)))'
+        elif self.is_repeated():
             return f'arrow::field("{self.name()}", arrow::list({ARROW_TYPES[self.field.cpp_type]}))'
         elif self.is_message():
-            return f'arrow::field("{self.name()}", arrow::struct_({self.appender_type()}::getFieldVector()))'
+            return f'arrow::field("{self.name()}", arrow::struct_({self.appender_type()}::FIELD_VECTOR))'
         else:
             return f'arrow::field("{self.name()}", {ARROW_TYPES[self.field.cpp_type]})'
 

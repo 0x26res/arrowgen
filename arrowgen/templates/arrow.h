@@ -14,7 +14,8 @@ namespace {{namespace}} {
 {% for wrapper in file_wrapper.message_wrappers() -%}
 class {{ wrapper.appender_name() }} {
     public:
-    static arrow::FieldVector getFieldVector();
+    static const arrow::FieldVector FIELD_VECTOR;
+    static const std::vector<std::string> FIELD_NAMES;
 
     explicit {{ wrapper.appender_name() }}(arrow::MemoryPool *pool = arrow::default_memory_pool());
     arrow::Status append(const char* bytes, size_t size);
@@ -22,10 +23,11 @@ class {{ wrapper.appender_name() }} {
     arrow::Status build(std::shared_ptr<arrow::Table>* table);
     arrow::Status Finish(std::shared_ptr<arrow::Array>* array);
 
+//    std::vector<std::shared_ptr<arrow::ArrayBuilder>> getBuilders();
+
     private:
     arrow::Status build(std::shared_ptr<arrow::StructArray>* struct_array);
     arrow::Status build(arrow::ArrayVector& arrays);
-    static std::vector<std::string> getFieldNames();
 
     {% for member in wrapper.appender_members() -%}
     {{member.cpp_type}} {{member.name}};
