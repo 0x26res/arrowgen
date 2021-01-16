@@ -5,10 +5,10 @@
 
 #include <arrow/api.h>
 
-// While we want to use columnar data structures to build efficient operations, we
-// often receive data in a row-wise fashion from other systems. In the following,
-// we want give a brief introduction into the classes provided by Apache Arrow by
-// showing how to transform row-wise data into a columnar table.
+// While we want to use columnar data structures to build efficient operations,
+// we often receive data in a row-wise fashion from other systems. In the
+// following, we want give a brief introduction into the classes provided by
+// Apache Arrow by showing how to transform row-wise data into a columnar table.
 //
 // The data in this example is stored in the following struct:
 struct data_row {
@@ -17,18 +17,16 @@ struct data_row {
   std::vector<double> cost_components;
 };
 
+arrow::Status VectorToColumnarTable(const std::vector<struct data_row> &rows,
+                                    std::shared_ptr<arrow::Table> *table);
 
-
-arrow::Status VectorToColumnarTable(const std::vector<struct data_row>& rows,
-                                    std::shared_ptr<arrow::Table>* table);
-
-arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table>& table,
-                                    std::vector<struct data_row>* rows);
+arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
+                                    std::vector<struct data_row> *rows);
 
 struct nested_repeated {
   std::vector<data_row> rows;
 };
 
-
-arrow::Status VectorToColumnarTable(const std::vector<struct nested_repeated>& rows,
-                                    std::shared_ptr<arrow::Table>* table);
+arrow::Status
+VectorToColumnarTable(const std::vector<struct nested_repeated> &rows,
+                      std::shared_ptr<arrow::Table> *table);

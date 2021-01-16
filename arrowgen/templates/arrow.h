@@ -16,6 +16,8 @@ class {{ wrapper.appender_name() }} {
     public:
     static const arrow::FieldVector FIELD_VECTOR;
     static const std::vector<std::string> FIELD_NAMES;
+    static const std::shared_ptr<arrow::DataType> DATA_TYPE;
+    static const std::shared_ptr<arrow::Schema> SCHEMA;
 
     explicit {{ wrapper.appender_name() }}(arrow::MemoryPool *pool = arrow::default_memory_pool());
     arrow::Status append(const char* bytes, size_t size);

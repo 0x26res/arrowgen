@@ -214,3 +214,33 @@ VectorToColumnarTable(const std::vector<struct nested_repeated> &rows,
 
   return arrow::Status::OK();
 }
+
+arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
+                                    std::vector<struct nested_repeated> *rows) {
+  // WIP
+  std::vector<std::shared_ptr<arrow::Field>> row_fields = {
+      arrow::field("id", arrow::int64()),
+      arrow::field("cost", arrow::float64()),
+      arrow::field("cost_components", arrow::list(arrow::float64()))};
+  std::shared_ptr<arrow::Field> rows_field =
+      arrow::field("rows", arrow::struct_(row_fields));
+  std::vector<std::shared_ptr<arrow::Field>> message_fields;
+  message_fields.push_back(rows_field);
+  auto expected_schema = std::make_shared<arrow::Schema>(message_fields);
+
+  if (!expected_schema->Equals(*table->schema())) {
+    // The table doesn't have the expected schema thus we cannot directly
+    // convert it to our target representation.
+    return arrow::Status::Invalid("Schemas are not matching!");
+  }
+
+  std::shared_ptr<arrow::ListArray> rows_list_array_ =
+      std::static_pointer_cast<arrow::ListArray>(
+          table->GetColumnByName("rows")->chunk(0));
+
+  // TODO: use GetArrayView to get the struct array
+  std::shared_ptr<arrow::ArrayData> rows_struct_array_ =
+      rows_list_array_->data();
+
+  return arrow::Status::OK();
+}

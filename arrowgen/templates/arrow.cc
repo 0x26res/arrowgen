@@ -39,23 +39,12 @@ arrow::Status {{wrapper.appender_name()}}::build(arrow::ArrayVector& arrays) {
 }
 
 
-const arrow::FieldVector {{wrapper.appender_name()}}::FIELD_VECTOR = {
-    {% for schema_statement in wrapper.schema_statements() -%}
-    {{schema_statement}}{{ "," if not loop.last }}
-    {% endfor %}
-};
 
 
 std::vector<std::shared_ptr<arrow::ArrayBuilder>> {{wrapper.appender_name()}}::getBuilders() {
   std::vector<std::shared_ptr<arrow::ArrayBuilder>> results;
   {% for field in wrapper.appender_fields() -%}
-  {% if field.is_message() -%}
-  for(std::shared_ptr<arrow::ArrayBuilder> const& array_builder : this->{{field.main_builder_name()}}->getBuilders()) {
-    results.push_back(array_builder);
-  }
-  {% else -%}
-  results.push_back(this->{{field.main_builder_name()}});
-  {% endif %}
+  results.push_back({{field.main_builder_name()}});
   {% endfor -%}
   return results;
 }
@@ -78,11 +67,21 @@ arrow::Status {{wrapper.appender_name()}}::Finish(std::shared_ptr<arrow::Array>*
     return arrow::Status::OK();
 }
 
+const arrow::FieldVector {{wrapper.appender_name()}}::FIELD_VECTOR = {
+{% for schema_statement in wrapper.schema_statements() -%}
+{{schema_statement}}{{ "," if not loop.last }}
+{% endfor %}
+};
+
 const std::vector<std::string> {{wrapper.appender_name()}}::FIELD_NAMES = {
     {% for field_name in wrapper.field_names() -%}
     "{{ field_name }}"{{ "," if not loop.last }}
     {% endfor %}
 };
+
+const std::shared_ptr<arrow::DataType> {{wrapper.appender_name()}}::DATA_TYPE = arrow::struct_({{wrapper.appender_name()}}::FIELD_VECTOR);
+
+const std::shared_ptr<arrow::Schema> {{wrapper.appender_name()}}::SCHEMA = std::make_shared<arrow::Schema>({{wrapper.appender_name()}}::FIELD_VECTOR);
 
 
 arrow::Status {{wrapper.appender_name()}}::build(std::shared_ptr<arrow::StructArray> * struct_array) {

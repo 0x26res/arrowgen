@@ -143,4 +143,3 @@ BOOST_AUTO_TEST_CASE(test_build_works) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-
