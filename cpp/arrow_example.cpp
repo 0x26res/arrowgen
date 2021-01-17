@@ -19,6 +19,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 #include <arrow/api.h>
@@ -167,7 +168,7 @@ VectorToColumnarTable(const std::vector<struct nested_repeated> &rows,
 
   std::shared_ptr<arrow::DataType> row_data_type = arrow::struct_({
       arrow::field("id", arrow::int64()),
-      arrow::field("double", arrow::float64()),
+      arrow::field("cost", arrow::float64()),
       arrow::field("cost_components", arrow::list(arrow::float64())),
   });
 
@@ -215,32 +216,73 @@ VectorToColumnarTable(const std::vector<struct nested_repeated> &rows,
   return arrow::Status::OK();
 }
 
-arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
-                                    std::vector<struct nested_repeated> *rows) {
+arrow::Status
+ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
+                      std::vector<struct nested_repeated> &results) {
   // WIP
   std::vector<std::shared_ptr<arrow::Field>> row_fields = {
       arrow::field("id", arrow::int64()),
       arrow::field("cost", arrow::float64()),
       arrow::field("cost_components", arrow::list(arrow::float64()))};
   std::shared_ptr<arrow::Field> rows_field =
-      arrow::field("rows", arrow::struct_(row_fields));
+      arrow::field("rows", arrow::list(arrow::struct_(row_fields)));
+
   std::vector<std::shared_ptr<arrow::Field>> message_fields;
   message_fields.push_back(rows_field);
-  auto expected_schema = std::make_shared<arrow::Schema>(message_fields);
+  std::shared_ptr<arrow::Schema> expected_schema =
+      std::make_shared<arrow::Schema>(message_fields);
 
   if (!expected_schema->Equals(*table->schema())) {
     // The table doesn't have the expected schema thus we cannot directly
     // convert it to our target representation.
-    return arrow::Status::Invalid("Schemas are not matching!");
+    std::stringstream ostream;
+    ostream << "Schemas are not matching: " << *table->schema() << " vs "
+            << *expected_schema;
+    return arrow::Status::Invalid(ostream.str());
   }
 
   std::shared_ptr<arrow::ListArray> rows_list_array_ =
       std::static_pointer_cast<arrow::ListArray>(
           table->GetColumnByName("rows")->chunk(0));
+  std::shared_ptr<arrow::StructArray> struct_array =
+      std::static_pointer_cast<arrow::StructArray>(rows_list_array_->values());
 
-  // TODO: use GetArrayView to get the struct array
-  std::shared_ptr<arrow::ArrayData> rows_struct_array_ =
-      rows_list_array_->data();
+  std::shared_ptr<arrow::Int64Array> ids =
+      std::static_pointer_cast<arrow::Int64Array>(
+          struct_array->GetFieldByName("id"));
+  std::shared_ptr<arrow::DoubleArray> costs =
+      std::static_pointer_cast<arrow::DoubleArray>(
+          struct_array->GetFieldByName("cost"));
+  std::shared_ptr<arrow::ListArray> cost_components =
+      std::static_pointer_cast<arrow::ListArray>(
+          struct_array->GetFieldByName("cost_components"));
+  auto cost_components_values =
+      std::static_pointer_cast<arrow::DoubleArray>(cost_components->values());
+
+  const double *ccv_ptr = cost_components_values->data()->GetValues<double>(1);
+
+  for (size_t row = 0; row < table->num_rows(); ++row) {
+    nested_repeated record;
+
+    for (size_t field_index = rows_list_array_->value_offset(row);
+         field_index <= rows_list_array_->value_offset(row + 1);
+         ++field_index) {
+      data_row nested_message;
+      nested_message.id = ids->Value(field_index);
+      nested_message.cost = costs->Value(field_index);
+
+      for (size_t cost_component_index =
+               cost_components->value_offset(field_index);
+           cost_component_index <
+           cost_components->value_offset(field_index + 1);
+           ++cost_component_index) {
+        nested_message.cost_components.push_back(
+            cost_components_values->Value(cost_component_index));
+      }
+      record.rows.push_back(nested_message);
+    }
+    results.push_back(record);
+  }
 
   return arrow::Status::OK();
 }
