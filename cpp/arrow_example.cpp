@@ -219,7 +219,6 @@ VectorToColumnarTable(const std::vector<struct nested_repeated> &rows,
 arrow::Status
 ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
                       std::vector<struct nested_repeated> &results) {
-  // WIP
   std::vector<std::shared_ptr<arrow::Field>> row_fields = {
       arrow::field("id", arrow::int64()),
       arrow::field("cost", arrow::float64()),
@@ -265,8 +264,7 @@ ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
     nested_repeated record;
 
     for (size_t field_index = rows_list_array_->value_offset(row);
-         field_index <= rows_list_array_->value_offset(row + 1);
-         ++field_index) {
+         field_index < rows_list_array_->value_offset(row + 1); ++field_index) {
       data_row nested_message;
       nested_message.id = ids->Value(field_index);
       nested_message.cost = costs->Value(field_index);
@@ -285,4 +283,28 @@ ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
   }
 
   return arrow::Status::OK();
+}
+bool data_row::operator==(const data_row &rhs) const {
+  return id == rhs.id && cost == rhs.cost &&
+         cost_components == rhs.cost_components;
+}
+bool data_row::operator!=(const data_row &rhs) const { return !(rhs == *this); }
+std::ostream &operator<<(std::ostream &os, const data_row &row) {
+  os << "id: " << row.id << " cost: " << row.cost
+     << " cost_components: " << row.cost_components.size();
+  return os;
+}
+bool nested_repeated::operator==(const nested_repeated &rhs) const {
+  return rows == rhs.rows;
+}
+bool nested_repeated::operator!=(const nested_repeated &rhs) const {
+  return !(rhs == *this);
+}
+std::ostream &operator<<(std::ostream &os, const nested_repeated &repeated) {
+
+  os << "rows: ";
+  for (data_row const &row : repeated.rows) {
+    os << row;
+  }
+  return os;
 }

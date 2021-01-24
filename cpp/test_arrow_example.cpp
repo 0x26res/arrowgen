@@ -30,9 +30,13 @@ BOOST_AUTO_TEST_CASE(test_nested_example) {
 
   BOOST_REQUIRE_EQUAL(messages.size(), table->num_rows());
 
-  std::vector<nested_repeated> read_rows;
+  std::vector<nested_repeated> read_messages;
   BOOST_REQUIRE_EQUAL(arrow::Status::OK(),
-                      ColumnarTableToVector(table, read_rows));
+                      ColumnarTableToVector(table, read_messages));
+
+  for (size_t index = 0; index < messages.size(); ++index) {
+    BOOST_REQUIRE_EQUAL(messages[index], read_messages[index]);
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

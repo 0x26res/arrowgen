@@ -4,6 +4,7 @@
 #endif // ARROWGENTEST_ARROW_EXAMPLE_H
 
 #include <arrow/api.h>
+#include <ostream>
 
 // While we want to use columnar data structures to build efficient operations,
 // we often receive data in a row-wise fashion from other systems. In the
@@ -15,6 +16,11 @@ struct data_row {
   int64_t id;
   double cost;
   std::vector<double> cost_components;
+
+  bool operator==(const data_row &rhs) const;
+  bool operator!=(const data_row &rhs) const;
+
+  friend std::ostream &operator<<(std::ostream &os, const data_row &row);
 };
 
 arrow::Status VectorToColumnarTable(const std::vector<struct data_row> &rows,
@@ -25,6 +31,12 @@ arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
 
 struct nested_repeated {
   std::vector<data_row> rows;
+
+  bool operator==(const nested_repeated &rhs) const;
+  bool operator!=(const nested_repeated &rhs) const;
+
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const nested_repeated &repeated);
 };
 
 arrow::Status
