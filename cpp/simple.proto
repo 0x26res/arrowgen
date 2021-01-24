@@ -73,6 +73,6 @@ message NestedMessage {
   DataRow data_row = 2;
 }
 
-//message RepeatedNestedMessage {
-//  repeated DataRow data_rows = 2;
-//}
+message RepeatedNestedMessage {
+  repeated DataRow data_rows = 2;
+}

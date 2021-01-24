@@ -137,6 +137,17 @@ BOOST_AUTO_TEST_CASE(test_NestedMessage) {
   BOOST_REQUIRE_EQUAL(arrow::Status::OK(), status);
 }
 
+
+BOOST_AUTO_TEST_CASE(test_RepeatedNestedMessage) {
+  std::vector<messages::RepeatedNestedMessage> messages =
+      loadJson<messages::RepeatedNestedMessage>("data/RepeatedNestedMessage.jsonl");
+  arrow::Status status =
+      testDataType<messages::RepeatedNestedMessage, messages::RepeatedNestedMessageAppender,
+          messages::RepeatedNestedMessageReader>(messages);
+  BOOST_REQUIRE_EQUAL(arrow::Status::OK(), status);
+}
+
+
 BOOST_AUTO_TEST_CASE(test_build_works) {
   messages::TestMessage test_message;
   std::cout << test_message.int32_value() << std::endl;

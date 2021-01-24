@@ -165,7 +165,9 @@ class ReaderField(BaseField):
         return f"table_->column({self.index})->chunk({self.chunk_name()})"
 
     def length_statement(self):
-        if self.is_message():
+        if (
+            self.is_message() and not self.is_repeated_message()
+        ):  # TODO: FIX (use shared ptr everywhere)
             return ".length()"
         else:
             return "->length()"
@@ -173,6 +175,8 @@ class ReaderField(BaseField):
     def value_reader(self):
         if self.field.cpp_type == FieldDescriptor.CPPTYPE_STRING:
             return "GetString"
+        elif self.is_message():
+            return
         else:
             return "Value"
 
@@ -186,7 +190,19 @@ class ReaderField(BaseField):
         return CPP_ARRAYS[self.field.cpp_type]
 
     def struct_reader_members(self) -> Sequence[ClassMember]:
-        if self.is_repeated():
+        if self.is_repeated_message():
+            yield ClassMember(
+                self.list_array_name(),
+                shared_ptr("arrow::ListArray"),
+                f'{self.list_array_caster()}(struct_array_->GetFieldByName("{self.name()}"))',
+            )
+            yield ClassMember(
+                self.array_name(),
+                self.struct_reader_type(),
+                f'{self.array_caster()}(struct_array_->GetFieldByName("{self.name()}"))',
+            )
+
+        elif self.is_repeated():
             yield ClassMember(
                 self.list_array_name(),
                 shared_ptr("arrow::ListArray"),
@@ -219,11 +235,18 @@ class ReaderField(BaseField):
                 shared_ptr("arrow::ListArray"),
                 f"{self.list_array_caster()}({self.get_array_statement()})",
             )
-            yield ClassMember(
-                self.array_name(),
-                shared_ptr(self.array_type()),
-                f"{self.array_caster()}({self.list_array_name()}->values())",
-            )
+            if self.is_message():
+                yield ClassMember(
+                    self.array_name(),
+                    self.struct_reader_type(),
+                    f"{self.array_caster()}({self.list_array_name()}->values())",
+                )
+            else:
+                yield ClassMember(
+                    self.array_name(),
+                    shared_ptr(self.array_type()),
+                    f"{self.array_caster()}({self.list_array_name()}->values())",
+                )
         elif self.is_message():
             yield ClassMember(
                 self.array_name(),
@@ -349,12 +372,10 @@ class AppenderField(BaseField):
 
     def finish_statements(self):
         yield f"std::shared_ptr<arrow::Array> {self.array_name()};"
-        if self.is_repeated_message():
-            raise RuntimeError("Not supported yet")
+        if self.is_repeated():
+            yield f"ARROW_RETURN_NOT_OK({self.list_builder_name()}->Finish(&{self.array_name()}));"
         elif self.is_message():
             yield f"ARROW_RETURN_NOT_OK({self.struct_builder_name()}->Finish(&{self.array_name()}));"
-        elif self.is_repeated():
-            yield f"ARROW_RETURN_NOT_OK({self.list_builder_name()}->Finish(&{self.array_name()}));"
         else:
             yield f"ARROW_RETURN_NOT_OK({self.builder_name()}->Finish(&{self.array_name()}));"
         yield f"arrays.push_back({self.array_name()});"

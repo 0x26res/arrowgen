@@ -114,7 +114,11 @@ arrow::Status {{wrapper.struct_reader_name()}}::GetValue(uint64_t const index, {
     for ({{field.offset_type()}} value_index = {{field.list_array_name()}}->value_offset(index);
          value_index < {{field.list_array_name()}}->value_offset(index + 1);
          ++value_index) {
+      {% if field.is_message() %}
+      {{field.array_name()}}.GetValue(index, *message.add_{{field.name()}}());
+      {% else %}
       message.add_{{field.name()}}({{field.optional_cast()}}{{field.array_name()}}->{{field.value_reader()}}(value_index) );
+      {% endif %}
     }
     {% else %}
     {% if field.is_message() %}
@@ -167,7 +171,11 @@ arrow::Status {{wrapper.reader_name()}}::readNext({{wrapper.message_name()}} &me
     for ({{field.offset_type()}} index = {{field.list_array_name()}}->value_offset({{field.index_name()}});
          index < {{field.list_array_name()}}->value_offset({{field.index_name()}} + 1);
          ++index) {
+      {% if field.is_message() %}
+      {{field.array_name()}}.GetValue(index, *message.add_{{ field.name() }}());
+      {% else %}
       message.add_{{field.name()}}({{field.optional_cast()}}{{field.array_name()}}->{{field.value_reader()}}(index) );
+      {% endif %}
     }
     {% elif field.is_message() %}
     {{field.value_type()}}* {{field.name()}} = new {{field.value_type()}}();

@@ -23,7 +23,7 @@ def _get_simple_proto_module():
 
 def _prepare_data(module):
     for message in module.message_types_by_name.values():
-        data = [generate_data(message) for i in range(10)]
+        data = [generate_data(message, count=10) for i in range(10)]
         with open("messages/" + message.name + ".jsonl", "w") as fp:
             for d in data:
                 fp.write(MessageToJson(d, indent=0).replace("\n", ""))
@@ -33,8 +33,8 @@ def _prepare_data(module):
 class TestDataGen(unittest.TestCase):
     def test_generate_some(self):
         simple = _get_simple_proto_module()
-        generate_data(simple.SearchRequest.DESCRIPTOR)
-        generate_data(simple.DataRow.DESCRIPTOR)
+        generate_data(simple.SearchRequest.DESCRIPTOR, 10)
+        generate_data(simple.DataRow.DESCRIPTOR, 10)
 
 
 class GeneratorTest(unittest.TestCase):

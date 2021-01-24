@@ -42,7 +42,6 @@ The generated code consist of two classes per message:
 
 # TODO
 
-- [ ] Add support for repeated nested data
 - [ ] Stop poluting the source when testing -> disable existing test
 - [ ] Discover libraries dynamically when compiling in test
 - [ ] Add documentation (type mapping)
@@ -59,3 +58,9 @@ The generated code consist of two classes per message:
 - [ ] rationalize wrappers and code generation, better naming for list
 - [ ] go through code TODOs
 - [ ] change command to be consistent with protoc
+- [ ] Be consistent when using shared ptr
+- [ ] Try to get rid of the Struct reader
+- [ ] Add a fake dependency on python code in cmake to make rebuild automatic
+- [ ] Delete duplicated proto file (symlink?)
+- [ ] add messages with various level of nesting
+- [ ] add support for imports from other files

@@ -42,10 +42,10 @@ VALID_CPP_DATA = {
 }
 
 
-def generate_data(descriptor: Descriptor):
+def generate_data(descriptor: Descriptor, count: int):
     message = descriptor._concrete_class()
     for field in descriptor.fields:
-        data = generate_field_data(field)
+        data = generate_field_data(field, count)
         if field.label == FieldDescriptor.LABEL_REPEATED:
             getattr(message, field.name).extend(data)
         elif field.cpp_type == FieldDescriptor.CPPTYPE_MESSAGE:
@@ -55,22 +55,19 @@ def generate_data(descriptor: Descriptor):
     return message
 
 
-def generate_field_data(field: FieldDescriptor):
+def generate_field_data(field: FieldDescriptor, count: int):
     if field.label == FieldDescriptor.LABEL_REPEATED:
-        size = random.randint(0, 10)
-        return [_generate_data(field) for _ in range(size)]
+        size = random.randint(0, count)
+        return [_generate_data(field, count) for _ in range(size)]
     else:
-        return _generate_data(field)
+        return _generate_data(field, count)
 
 
-def _generate_data(field: FieldDescriptor):
+def _generate_data(field: FieldDescriptor, count):
     if field.cpp_type == FieldDescriptor.CPPTYPE_ENUM:
         return _generate_enum(field.enum_type)
     elif field.cpp_type == FieldDescriptor.CPPTYPE_MESSAGE:
-        if field.label == FieldDescriptor.LABEL_REPEATED:
-            raise ValueError("Not Implemented")
-        else:
-            return generate_data(field.message_type)
+        return generate_data(field.message_type, count)
     elif field.type in VALID_DATA:
         return random.choice(VALID_DATA[field.type])
     else:
@@ -93,7 +90,7 @@ def generate_for_file_descriptor(
     results = []
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
     for message in file_descriptor.message_types_by_name.values():
-        data = [generate_data(message) for _ in range(count)]
+        data = [generate_data(message, count) for _ in range(count)]
         file_name = os.path.join(output_dir, message.name + ".jsonl")
         results.append(file_name)
 

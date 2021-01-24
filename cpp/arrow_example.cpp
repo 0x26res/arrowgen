@@ -258,8 +258,6 @@ ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
   auto cost_components_values =
       std::static_pointer_cast<arrow::DoubleArray>(cost_components->values());
 
-  const double *ccv_ptr = cost_components_values->data()->GetValues<double>(1);
-
   for (size_t row = 0; row < table->num_rows(); ++row) {
     nested_repeated record;
 
@@ -284,6 +282,7 @@ ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
 
   return arrow::Status::OK();
 }
+
 bool data_row::operator==(const data_row &rhs) const {
   return id == rhs.id && cost == rhs.cost &&
          cost_components == rhs.cost_components;
