@@ -42,22 +42,19 @@ The generated code consist of two classes per message:
 
 # TODO
 
-- [ ] Stop poluting the source when testing -> disable existing test
-- [ ] Discover libraries dynamically when compiling in test
 - [ ] Add documentation (type mapping)
 - [ ] Add support for maps
+- [ ] Add support for one of
 - [ ] Improve docs (add simple example)
 - [ ] Use TypeTraits for tests
 - [ ] Work column by column?
 - [ ] Add classifiers
 - [ ] try to publish to pypi for real
 - [ ] Make schema & field vector a static member
-- [ ] use GetColumnByName
 - [ ] add struct array reader
 - [ ] consistent case in functions and members
 - [ ] rationalize wrappers and code generation, better naming for list
 - [ ] go through code TODOs
-- [ ] change command to be consistent with protoc
 - [ ] Be consistent when using shared ptr
 - [ ] Try to get rid of the Struct reader
 - [ ] Add a fake dependency on python code in cmake to make rebuild automatic

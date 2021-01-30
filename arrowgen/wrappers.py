@@ -72,9 +72,8 @@ class ClassMember:
 
 
 class BaseField:
-    def __init__(self, field: FieldDescriptor, index: int):
+    def __init__(self, field: FieldDescriptor):
         self.field = field
-        self.index = index
         self.message_wrapper = (
             MessageWrapper(self.field.message_type) if self.is_message() else None
         )
@@ -134,8 +133,8 @@ class BaseField:
 
 
 class ReaderField(BaseField):
-    def __init__(self, field: FieldDescriptor, index: int):
-        super().__init__(field, index)
+    def __init__(self, field: FieldDescriptor):
+        super().__init__(field)
 
     def index_name(self):
         return self.make_name("index")
@@ -162,7 +161,7 @@ class ReaderField(BaseField):
         return f"std::static_pointer_cast<{self.array_type()}>"
 
     def get_array_statement(self):
-        return f"table_->column({self.index})->chunk({self.chunk_name()})"
+        return f'table_->GetColumnByName("{self.name()}")->chunk({self.chunk_name()})'
 
     def length_statement(self):
         if (
@@ -266,8 +265,8 @@ class ReaderField(BaseField):
 
 
 class AppenderField(BaseField):
-    def __init__(self, field: FieldDescriptor, index: int):
-        super().__init__(field, index)
+    def __init__(self, field: FieldDescriptor):
+        super().__init__(field)
 
     def appender_name(self):
         return self.make_name("appender")
@@ -430,12 +429,12 @@ class MessageWrapper:
                 yield array_member
 
     def reader_fields(self) -> Sequence[ReaderField]:
-        for index, field in enumerate(self.descriptor.fields):
-            yield ReaderField(field, index)
+        for field in self.descriptor.fields:
+            yield ReaderField(field)
 
     def appender_fields(self) -> Sequence[AppenderField]:
-        for index, field in enumerate(self.descriptor.fields):
-            yield AppenderField(field, index)
+        for field in self.descriptor.fields:
+            yield AppenderField(field)
 
     def appender_members(self) -> Sequence[ClassMember]:
         for appender_field in self.appender_fields():

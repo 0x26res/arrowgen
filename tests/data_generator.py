@@ -12,7 +12,7 @@ from google.protobuf.descriptor import (
 )
 from google.protobuf.json_format import MessageToJson
 
-from arrowgen.generator import get_file_descriptor
+from arrowgen.generator import get_proto_module
 
 VALID_DATA = {FieldDescriptor.TYPE_BYTES: [b"1", b"foo", b"\n"]}
 
@@ -80,7 +80,7 @@ def _generate_enum(enum: EnumDescriptor):
 
 
 def generate_for_file(file: str, output_dir: str, count: int = 10) -> List[str]:
-    file_descriptor = get_file_descriptor(file)
+    file_descriptor = get_proto_module(file).DESCRIPTOR
     return generate_for_file_descriptor(file_descriptor, output_dir, count)
 
 

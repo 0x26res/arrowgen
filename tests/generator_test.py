@@ -1,24 +1,17 @@
-import importlib
 import unittest
+from functools import lru_cache
 
+import pkg_resources
 from google.protobuf.json_format import MessageToJson
 
-from arrowgen.generator import generate_for_descriptor, write_files
-from arrowgen.utils import run_command
+from arrowgen.generator import generate_for_descriptor, get_proto_module
 from tests.data_generator import generate_data, generate_for_file_descriptor
 
 
+@lru_cache
 def _get_simple_proto_module():
-    run_command(
-        [
-            "protoc",
-            "--proto_path=./",
-            "./messages/simple.proto",
-            "--cpp_out=./",
-            "--python_out=./",
-        ]
-    )
-    return importlib.import_module("tests.messages.simple_pb2")
+    file = pkg_resources.resource_filename(__name__, "simple.proto")
+    return get_proto_module(file)
 
 
 def _prepare_data(module):
