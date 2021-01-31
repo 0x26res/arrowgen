@@ -28,6 +28,7 @@ class TestDataGen(unittest.TestCase):
         simple = _get_simple_proto_module()
         generate_data(simple.SearchRequest.DESCRIPTOR, 10)
         generate_data(simple.DataRow.DESCRIPTOR, 10)
+        generate_data(simple.OneOfMessage.DESCRIPTOR, 10)
 
 
 class GeneratorTest(unittest.TestCase):

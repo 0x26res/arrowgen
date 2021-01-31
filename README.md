@@ -40,6 +40,16 @@ The generated code consist of two classes per message:
 4. Test the code: load test json data as proto messages, convert to table and back
 5. Test again with several record batches this time 
 
+# Implementation notes
+
+## OneOf
+
+For one of we use a dictionary column to store the name of the one of element (WIP)
+
+## Type Mapping
+
+WIP
+
 # TODO
 
 - [ ] Add documentation (type mapping)
@@ -50,14 +60,11 @@ The generated code consist of two classes per message:
 - [ ] Work column by column?
 - [ ] Add classifiers
 - [ ] try to publish to pypi for real
-- [ ] Make schema & field vector a static member
 - [ ] add struct array reader
 - [ ] consistent case in functions and members
 - [ ] rationalize wrappers and code generation, better naming for list
 - [ ] go through code TODOs
 - [ ] Be consistent when using shared ptr
 - [ ] Try to get rid of the Struct reader
-- [ ] Add a fake dependency on python code in cmake to make rebuild automatic
-- [ ] Delete duplicated proto file (symlink?)
 - [ ] add messages with various level of nesting
 - [ ] add support for imports from other files

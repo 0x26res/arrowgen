@@ -307,3 +307,10 @@ std::ostream &operator<<(std::ostream &os, const nested_repeated &repeated) {
   }
   return os;
 }
+
+arrow::Status
+VectorToColumnarTable(const std::vector<messages::OneOfMessage> &rows,
+                      std::shared_ptr<arrow::Table> *table) {
+
+  return arrow::Status::OK();
+}

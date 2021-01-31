@@ -3,6 +3,8 @@
 
 #endif // ARROWGENTEST_ARROW_EXAMPLE_H
 
+
+#include <simple.pb.h>
 #include <arrow/api.h>
 #include <ostream>
 
@@ -45,3 +47,7 @@ VectorToColumnarTable(const std::vector<struct nested_repeated> &rows,
 
 arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
                                     std::vector<struct nested_repeated> &rows);
+
+
+arrow::Status VectorToColumnarTable(const std::vector<messages::OneOfMessage> &rows,
+                                    std::shared_ptr<arrow::Table> *table);

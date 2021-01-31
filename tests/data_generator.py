@@ -11,6 +11,7 @@ from google.protobuf.descriptor import (
     FileDescriptor,
 )
 from google.protobuf.json_format import MessageToJson
+from google.protobuf.message import Message
 
 from arrowgen.generator import get_proto_module
 
@@ -44,15 +45,25 @@ VALID_CPP_DATA = {
 
 def generate_data(descriptor: Descriptor, count: int):
     message = descriptor._concrete_class()
+    for one_of in descriptor.oneofs:
+        one_of_index = random.randint(0, len(one_of.fields) - 1)
+        field = one_of.fields[one_of_index]
+        set_field(message, field, count)
+
     for field in descriptor.fields:
-        data = generate_field_data(field, count)
-        if field.label == FieldDescriptor.LABEL_REPEATED:
-            getattr(message, field.name).extend(data)
-        elif field.cpp_type == FieldDescriptor.CPPTYPE_MESSAGE:
-            getattr(message, field.name).CopyFrom(data)
-        else:
-            setattr(message, field.name, data)
+        if field.containing_oneof is None:
+            set_field(message, field, count)
     return message
+
+
+def set_field(message: Message, field: FieldDescriptor, count: int):
+    data = generate_field_data(field, count)
+    if field.label == FieldDescriptor.LABEL_REPEATED:
+        getattr(message, field.name).extend(data)
+    elif field.cpp_type == FieldDescriptor.CPPTYPE_MESSAGE:
+        getattr(message, field.name).CopyFrom(data)
+    else:
+        setattr(message, field.name, data)
 
 
 def generate_field_data(field: FieldDescriptor, count: int):
@@ -85,7 +96,7 @@ def generate_for_file(file: str, output_dir: str, count: int = 10) -> List[str]:
 
 
 def generate_for_file_descriptor(
-    file_descriptor: FileDescriptor, output_dir: str, count: int
+        file_descriptor: FileDescriptor, output_dir: str, count: int
 ) -> List[str]:
     results = []
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)

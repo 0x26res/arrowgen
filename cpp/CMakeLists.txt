@@ -17,6 +17,9 @@ FIND_PACKAGE(Boost COMPONENTS system filesystem unit_test_framework REQUIRED)
 
 
 FILE(GLOB ProtofFiles ${CMAKE_CURRENT_SOURCE_DIR}/*.proto)
+FILE(GLOB PythonFiles ${CMAKE_CURRENT_SOURCE_DIR}/../arrowgen/*.py)
+FILE(GLOB TemplateFiles ${CMAKE_CURRENT_SOURCE_DIR}/../arrowgen/templates/*)
+
 PROTOBUF_GENERATE_CPP(PROTO_SRC PROTO_HEADER ${ProtofFiles})
 
 SET(PYTHON PYTHONPATH=${CMAKE_SOURCE_DIR}/.. ${CMAKE_SOURCE_DIR}/../venv/bin/python)
@@ -25,13 +28,13 @@ SET(ARROWGEN ${CMAKE_SOURCE_DIR}/..)
 add_custom_command(
         OUTPUT ${CMAKE_BINARY_DIR}/simple.arrow.cc ${CMAKE_BINARY_DIR}/simple.arrow.h
         COMMAND ${PYTHON} ${ARROWGEN}/arrowgen/__main__.py ${CMAKE_SOURCE_DIR}/simple.proto
-        DEPENDS ${CMAKE_SOURCE_DIR}/simple.proto
+        DEPENDS ${CMAKE_SOURCE_DIR}/simple.proto ${PythonFiles} ${TemplateFiles}
 )
 
 add_custom_target(
         NAME ALL
         COMMAND ${PYTHON} ${ARROWGEN}/tests/data_generator.py ${CMAKE_SOURCE_DIR}/simple.proto --output_dir=${CMAKE_BINARY_DIR}/data
-        DEPENDS ${CMAKE_SOURCE_DIR}/simple.proto
+        DEPENDS ${CMAKE_SOURCE_DIR}/simple.proto ${PythonFiles} ${TemplateFiles}
 )
 
 

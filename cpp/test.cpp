@@ -148,6 +148,16 @@ BOOST_AUTO_TEST_CASE(test_RepeatedNestedMessage) {
 }
 
 
+BOOST_AUTO_TEST_CASE(test_OneOfMessage) {
+  std::vector<messages::OneOfMessage> messages =
+      loadJson<messages::OneOfMessage>("data/OneOfMessage.jsonl");
+  arrow::Status status =
+      testDataType<messages::OneOfMessage, messages::OneOfMessageAppender,
+          messages::OneOfMessageReader>(messages);
+  BOOST_REQUIRE_EQUAL(arrow::Status::OK(), status);
+}
+
+
 BOOST_AUTO_TEST_CASE(test_build_works) {
   messages::TestMessage test_message;
   std::cout << test_message.int32_value() << std::endl;
