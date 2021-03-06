@@ -61,7 +61,7 @@ WIP
 - [ ] Work column by column?
 - [ ] Add classifiers
 - [ ] try to publish to pypi for real
-- [ ] add struct array reader
+- [x] add struct array reader
 - [ ] consistent case in functions and members
 - [ ] rationalize wrappers and code generation, better naming for list
 - [ ] go through code TODOs
@@ -71,3 +71,8 @@ WIP
 - [ ] add support for imports from other files
 - [x] stop using CPP_TYPE, use TYPE instead
 - [ ] generate cython wrapper
+- [ ] better data generation for one of
+- [ ] use union as schema for one of  
+- [ ] add test for repeated one of
+- [ ] Merge struct reader with reader
+- [ ] check chunk are aligned
