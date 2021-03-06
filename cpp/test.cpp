@@ -74,7 +74,7 @@ arrow::Status testDataType(std::vector<T> const data) {
   }
   std::shared_ptr<arrow::Table> table;
   ARROW_RETURN_NOT_OK(appender.build(&table));
-  assert(table->num_rows() == data.size());
+  BOOST_REQUIRE_EQUAL(table->num_rows(), data.size());
 
   arrow::Status status = ::compare<T, R>(table, data);
   ARROW_RETURN_NOT_OK(status);
@@ -137,26 +137,25 @@ BOOST_AUTO_TEST_CASE(test_NestedMessage) {
   BOOST_REQUIRE_EQUAL(arrow::Status::OK(), status);
 }
 
-
 BOOST_AUTO_TEST_CASE(test_RepeatedNestedMessage) {
   std::vector<messages::RepeatedNestedMessage> messages =
-      loadJson<messages::RepeatedNestedMessage>("data/RepeatedNestedMessage.jsonl");
+      loadJson<messages::RepeatedNestedMessage>(
+          "data/RepeatedNestedMessage.jsonl");
   arrow::Status status =
-      testDataType<messages::RepeatedNestedMessage, messages::RepeatedNestedMessageAppender,
-          messages::RepeatedNestedMessageReader>(messages);
+      testDataType<messages::RepeatedNestedMessage,
+                   messages::RepeatedNestedMessageAppender,
+                   messages::RepeatedNestedMessageReader>(messages);
   BOOST_REQUIRE_EQUAL(arrow::Status::OK(), status);
 }
 
-//
-//BOOST_AUTO_TEST_CASE(test_OneOfMessage) {
-//  std::vector<messages::OneOfMessage> messages =
-//      loadJson<messages::OneOfMessage>("data/OneOfMessage.jsonl");
-//  arrow::Status status =
-//      testDataType<messages::OneOfMessage, messages::OneOfMessageAppender,
-//          messages::OneOfMessageReader>(messages);
-//  BOOST_REQUIRE_EQUAL(arrow::Status::OK(), status);
-//}
-
+BOOST_AUTO_TEST_CASE(test_OneOfMessage) {
+  std::vector<messages::OneofMessage> messages =
+      loadJson<messages::OneofMessage>("data/OneofMessage.jsonl");
+  arrow::Status status =
+      testDataType<messages::OneofMessage, messages::OneofMessageAppender,
+                   messages::OneofMessageReader>(messages);
+  BOOST_REQUIRE_EQUAL(arrow::Status::OK(), status);
+}
 
 BOOST_AUTO_TEST_CASE(test_build_works) {
   messages::TestMessage test_message;

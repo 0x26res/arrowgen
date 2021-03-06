@@ -7,6 +7,7 @@
 #include <simple.pb.h>
 #include <arrow/api.h>
 #include <ostream>
+#include <variant>
 
 // While we want to use columnar data structures to build efficient operations,
 // we often receive data in a row-wise fashion from other systems. In the
@@ -49,5 +50,5 @@ arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
                                     std::vector<struct nested_repeated> &rows);
 
 
-arrow::Status VectorToColumnarTable(const std::vector<messages::OneOfMessage> &rows,
+arrow::Status VectorToColumnarTable(const std::vector<messages::OneofMessage> &rows,
                                     std::shared_ptr<arrow::Table> *table);

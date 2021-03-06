@@ -75,14 +75,14 @@ def generate_field_data(field: FieldDescriptor, count: int):
 
 
 def _generate_data(field: FieldDescriptor, count):
-    if field.cpp_type == FieldDescriptor.TYPE_ENUM:
+    if field.type == FieldDescriptor.TYPE_ENUM:
         return _generate_enum(field.enum_type)
-    elif field.cpp_type == FieldDescriptor.TYPE_MESSAGE:
+    elif field.type == FieldDescriptor.TYPE_MESSAGE:
         return generate_data(field.message_type, count)
     elif field.type in VALID_DATA:
         return random.choice(VALID_DATA[field.type])
     else:
-        sample = VALID_CPP_DATA.get(field.cpp_type)
+        sample = VALID_CPP_DATA[field.cpp_type]
         return random.choice(sample)
 
 

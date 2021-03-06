@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Sequence, Iterator
 
 from google.protobuf.descriptor import FileDescriptor, Descriptor, FieldDescriptor
 
@@ -112,6 +112,12 @@ class BaseField:
     def make_name(self, suffix: str):
         return f"{self.field.name}_{suffix}_"
 
+    def is_oneof(self):
+        return self.field.containing_oneof is not None
+
+    def oneof_name(self):
+        return self.field.containing_oneof.name
+
     def is_repeated_message(self):
         return self.is_repeated() and self.is_message()
 
@@ -158,6 +164,30 @@ class BaseField:
             return f'arrow::field("{self.name()}", arrow::struct_({self.appender_type()}::FIELD_VECTOR))'
         else:
             return f'arrow::field("{self.name()}", {ARROW_TYPES[self.field.type]})'
+
+    def oneof_name(self):
+        assert self.is_oneof()
+        return self.field.containing_oneof.name
+
+    def oneof_case_name(self):
+        """oneof_field_case"""
+        assert self.is_oneof()
+        return f"{self.oneof_name()}_case"
+
+    def oneof_case(self):
+        """ eg: kFoo """
+
+        upper_camel = (
+            self.field.camelcase_name[0].upper() + self.field.camelcase_name[1:]
+        )
+        return f"{self.containing_class()}::k{upper_camel}"
+
+    def has_statement(self):
+        assert self.is_oneof()
+        return f"{self.oneof_case_name()}() == {self.oneof_case()}"
+
+    def containing_class(self):
+        return self.field.containing_type.full_name.replace(".", "::")
 
 
 class ReaderField(BaseField):
@@ -215,6 +245,9 @@ class ReaderField(BaseField):
 
     def array_type(self):
         return CPP_ARRAYS[self.field.type]
+
+    def is_null_statement(self, index_name="index"):
+        return f"{self.main_array_name()}{'.' if self.is_message() else '->'}IsNull({index_name})"
 
     def struct_reader_members(self) -> Sequence[ClassMember]:
         if self.is_repeated_message():
@@ -373,6 +406,30 @@ class AppenderField(BaseField):
             ).to_shared_ptr()
 
     def append_statements(self):
+        if self.is_oneof():
+            yield f"if (message.{self.has_statement()})"
+            yield "{"
+            for s in self.exists_append_statements():
+                yield s
+            yield "}"
+            yield "else"
+            yield "{"
+            for s in self.missing_append_statements():
+                yield s
+            yield "}"
+        else:
+            for s in self.exists_append_statements():
+                yield s
+
+    def missing_append_statements(self) -> Iterator[str]:
+        if self.is_repeated():
+            yield f"ARROW_RETURN_NOT_OK({self.list_builder_name()}->AppendNull());"
+        elif self.is_message():
+            yield f"ARROW_RETURN_NOT_OK({self.struct_builder_name()}->AppendNull());"
+        else:
+            yield f"ARROW_RETURN_NOT_OK({self.builder_name()}->AppendNull());"
+
+    def exists_append_statements(self) -> Iterator[str]:
         """ TODO: Use jinja for this """
         if self.is_repeated_message():
             yield f"ARROW_RETURN_NOT_OK({self.list_builder_name()}->Append());"

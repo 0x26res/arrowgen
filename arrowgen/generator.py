@@ -1,4 +1,4 @@
-import importlib
+import os
 import pathlib
 import pkgutil
 import subprocess
@@ -10,7 +10,6 @@ from jinja2 import Template
 
 from arrowgen.utils import run_command, load_python_file
 from arrowgen.wrappers import FileWrapper
-import os
 
 
 def clang_format(code: str) -> str:

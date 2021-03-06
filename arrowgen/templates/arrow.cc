@@ -105,11 +105,20 @@ arrow::Status {{wrapper.appender_name()}}::build(std::shared_ptr<arrow::StructAr
 }
 
 
+bool {{wrapper.struct_reader_name()}}::IsNull(uint64_t const index) const {
+  return struct_array_->IsNull(index);
+}
+
+
 arrow::Status {{wrapper.struct_reader_name()}}::GetValue(uint64_t const index, {{wrapper.message_name()}} &message) const {
   if (index >= struct_array_->length()) {
     return arrow::Status::IndexError("Too Far");
   } else {
     {% for field in wrapper.reader_fields() -%}
+    {% if field.is_oneof() %}
+    if (!{{field.is_null_statement()}})
+    {
+    {% endif%}
     {% if field.is_repeated() -%}
     for ({{field.offset_type()}} value_index = {{field.list_array_name()}}->value_offset(index);
          value_index < {{field.list_array_name()}}->value_offset(index + 1);
@@ -128,6 +137,10 @@ arrow::Status {{wrapper.struct_reader_name()}}::GetValue(uint64_t const index, {
     {% else %}
     message.set_{{field.name()}}({{field.optional_cast()}}{{field.array_name()}}->{{field.value_reader()}}(index));
     {% endif %}
+    {% endif %}
+
+    {% if field.is_oneof() %}
+    }
     {% endif %}
     {% endfor %}
     return arrow::Status::OK();
@@ -167,6 +180,10 @@ arrow::Status {{wrapper.reader_name()}}::readNext({{wrapper.message_name()}} &me
         {{field.array_name()}} = {{field.array_caster()}}({{field.get_array_statement()}});
         {% endif %}
     }
+    {% if field.is_oneof() %}
+    if (!{{ field.is_null_statement(field.index_name()) }})
+    {
+    {% endif %}
     {% if field.is_repeated() %}
     for ({{field.offset_type()}} index = {{field.list_array_name()}}->value_offset({{field.index_name()}});
          index < {{field.list_array_name()}}->value_offset({{field.index_name()}} + 1);
@@ -183,6 +200,9 @@ arrow::Status {{wrapper.reader_name()}}::readNext({{wrapper.message_name()}} &me
     message.set_allocated_{{field.name()}}({{field.name()}});
     {% else %}
     message.set_{{field.name()}}({{field.optional_cast()}}{{field.array_name()}}->{{field.value_reader()}}({{field.index_name()}}));
+    {% endif %}
+    {% if field.is_oneof() %}
+    }
     {% endif %}
     ++{{field.index_name()}};
     {% endfor %}

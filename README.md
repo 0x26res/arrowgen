@@ -69,4 +69,5 @@ WIP
 - [ ] Try to get rid of the Struct reader
 - [ ] add messages with various level of nesting
 - [ ] add support for imports from other files
-- [ ] stop using CPP_TYPE, use TYPE instead
+- [x] stop using CPP_TYPE, use TYPE instead
+- [ ] generate cython wrapper

@@ -39,6 +39,7 @@ class {{ wrapper.appender_name() }} {
 class {{wrapper.struct_reader_name() }} {
   public:
     {{ wrapper.struct_reader_name() }}(std::shared_ptr<arrow::StructArray> struct_array);
+    bool IsNull(uint64_t const index) const;
     arrow::Status GetValue(uint64_t const index, {{wrapper.message_name()}}& message) const;
     uint64_t length() const;
 
