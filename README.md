@@ -44,7 +44,8 @@ The generated code consist of two classes per message:
 
 ## OneOf
 
-For one of we use a dictionary column to store the name of the one of element (WIP)
+--For one of we use a dictionary column to store the name of the one of element (WIP)-- Use `pyarrow.union`
+
 
 ## Type Mapping
 
@@ -68,3 +69,4 @@ WIP
 - [ ] Try to get rid of the Struct reader
 - [ ] add messages with various level of nesting
 - [ ] add support for imports from other files
+- [ ] stop using CPP_TYPE, use TYPE instead
