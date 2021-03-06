@@ -4,52 +4,80 @@ from typing import Sequence
 from google.protobuf.descriptor import FileDescriptor, Descriptor, FieldDescriptor
 
 CPP_TYPES = {
-    FieldDescriptor.CPPTYPE_BOOL: "bool",
-    FieldDescriptor.CPPTYPE_DOUBLE: "double",
-    FieldDescriptor.CPPTYPE_ENUM: "int32_t",
-    FieldDescriptor.CPPTYPE_FLOAT: "float",
-    FieldDescriptor.CPPTYPE_INT32: "int32_t",
-    FieldDescriptor.CPPTYPE_INT64: "int64_t",
-    FieldDescriptor.CPPTYPE_STRING: "std::string",
-    FieldDescriptor.CPPTYPE_UINT32: "uint32_t",
-    FieldDescriptor.CPPTYPE_UINT64: "uint64_t",
+    FieldDescriptor.TYPE_DOUBLE: "double",
+    FieldDescriptor.TYPE_FLOAT: "float",
+    FieldDescriptor.TYPE_INT64: "int64_t",
+    FieldDescriptor.TYPE_UINT64: "uint64_t",
+    FieldDescriptor.TYPE_INT32: "int32_t",
+    FieldDescriptor.TYPE_FIXED64: "uint64_t",
+    FieldDescriptor.TYPE_FIXED32: "uint32_t",
+    FieldDescriptor.TYPE_BOOL: "bool",
+    FieldDescriptor.TYPE_STRING: "std::string",
+    FieldDescriptor.TYPE_BYTES: "std::string",
+    FieldDescriptor.TYPE_UINT32: "uint32_t",
+    FieldDescriptor.TYPE_ENUM: "int32_t",
+    FieldDescriptor.TYPE_SFIXED32: "int32_t",
+    FieldDescriptor.TYPE_SFIXED64: "int64_t",
+    FieldDescriptor.TYPE_SINT32: "int32_t",
+    FieldDescriptor.TYPE_SINT64: "uint64_t",
 }
 
 CPP_BUILDERS = {
-    FieldDescriptor.CPPTYPE_BOOL: "arrow::BooleanBuilder",
-    FieldDescriptor.CPPTYPE_DOUBLE: "arrow::DoubleBuilder",
-    FieldDescriptor.CPPTYPE_ENUM: "arrow::Int32Builder",
-    FieldDescriptor.CPPTYPE_FLOAT: "arrow::FloatBuilder",
-    FieldDescriptor.CPPTYPE_INT32: "arrow::Int32Builder",
-    FieldDescriptor.CPPTYPE_INT64: "arrow::Int64Builder",
-    FieldDescriptor.CPPTYPE_STRING: "arrow::StringBuilder",
-    FieldDescriptor.CPPTYPE_UINT32: "arrow::UInt32Builder",
-    FieldDescriptor.CPPTYPE_UINT64: "arrow::UInt64Builder",
+    FieldDescriptor.TYPE_DOUBLE: "arrow::DoubleBuilder",
+    FieldDescriptor.TYPE_FLOAT: "arrow::FloatBuilder",
+    FieldDescriptor.TYPE_INT64: "arrow::Int64Builder",
+    FieldDescriptor.TYPE_UINT64: "arrow::UInt64Builder",
+    FieldDescriptor.TYPE_INT32: "arrow::Int32Builder",
+    FieldDescriptor.TYPE_FIXED64: "arrow::UInt64Builder",
+    FieldDescriptor.TYPE_FIXED32: "arrow::UInt32Builder",
+    FieldDescriptor.TYPE_BOOL: "arrow::BooleanBuilder",
+    FieldDescriptor.TYPE_STRING: "arrow::StringBuilder",
+    FieldDescriptor.TYPE_BYTES: "arrow::BinaryBuilder",
+    FieldDescriptor.TYPE_UINT32: "arrow::UInt32Builder",
+    FieldDescriptor.TYPE_ENUM: "arrow::Int32Builder",
+    FieldDescriptor.TYPE_SFIXED32: "arrow::Int32Builder",
+    FieldDescriptor.TYPE_SFIXED64: "arrow::Int64Builder",
+    FieldDescriptor.TYPE_SINT32: "arrow::Int32Builder",
+    FieldDescriptor.TYPE_SINT64: "arrow::Int64Builder",
 }
 
 CPP_ARRAYS = {
-    FieldDescriptor.CPPTYPE_BOOL: "arrow::BooleanArray",
-    FieldDescriptor.CPPTYPE_DOUBLE: "arrow::DoubleArray",
-    FieldDescriptor.CPPTYPE_ENUM: "arrow::Int32Array",
-    FieldDescriptor.CPPTYPE_FLOAT: "arrow::FloatArray",
-    FieldDescriptor.CPPTYPE_INT32: "arrow::Int32Array",
-    FieldDescriptor.CPPTYPE_INT64: "arrow::Int64Array",
-    FieldDescriptor.CPPTYPE_MESSAGE: "arrow::StructArray",
-    FieldDescriptor.CPPTYPE_STRING: "arrow::StringArray",
-    FieldDescriptor.CPPTYPE_UINT32: "arrow::UInt32Array",
-    FieldDescriptor.CPPTYPE_UINT64: "arrow::UInt64Array",
+    FieldDescriptor.TYPE_DOUBLE: "arrow::DoubleArray",
+    FieldDescriptor.TYPE_FLOAT: "arrow::FloatArray",
+    FieldDescriptor.TYPE_INT64: "arrow::Int64Array",
+    FieldDescriptor.TYPE_UINT64: "arrow::UInt64Array",
+    FieldDescriptor.TYPE_INT32: "arrow::Int32Array",
+    FieldDescriptor.TYPE_FIXED64: "arrow::UInt64Array",
+    FieldDescriptor.TYPE_FIXED32: "arrow::UInt32Array",
+    FieldDescriptor.TYPE_BOOL: "arrow::BooleanArray",
+    FieldDescriptor.TYPE_STRING: "arrow::StringArray",
+    FieldDescriptor.TYPE_MESSAGE: "arrow::StructArray",
+    FieldDescriptor.TYPE_BYTES: "arrow::BinaryArray",
+    FieldDescriptor.TYPE_UINT32: "arrow::UInt32Array",
+    FieldDescriptor.TYPE_ENUM: "arrow::Int32Array",
+    FieldDescriptor.TYPE_SFIXED32: "arrow::Int32Array",
+    FieldDescriptor.TYPE_SFIXED64: "arrow::Int64Array",
+    FieldDescriptor.TYPE_SINT32: "arrow::Int32Array",
+    FieldDescriptor.TYPE_SINT64: "arrow::Int64Array",
 }
 
 ARROW_TYPES = {
-    FieldDescriptor.CPPTYPE_BOOL: "arrow::boolean()",
-    FieldDescriptor.CPPTYPE_DOUBLE: "arrow::float64()",
-    FieldDescriptor.CPPTYPE_ENUM: "arrow::int32()",
-    FieldDescriptor.CPPTYPE_FLOAT: "arrow::float32()",
-    FieldDescriptor.CPPTYPE_INT32: "arrow::int32()",
-    FieldDescriptor.CPPTYPE_INT64: "arrow::int64()",
-    FieldDescriptor.CPPTYPE_STRING: "arrow::utf8()",
-    FieldDescriptor.CPPTYPE_UINT32: "arrow::uint32()",
-    FieldDescriptor.CPPTYPE_UINT64: "arrow::uint64()",
+    FieldDescriptor.TYPE_DOUBLE: "arrow::float64()",
+    FieldDescriptor.TYPE_FLOAT: "arrow::float32()",
+    FieldDescriptor.TYPE_INT64: "arrow::int64()",
+    FieldDescriptor.TYPE_UINT64: "arrow::uint64()",
+    FieldDescriptor.TYPE_INT32: "arrow::int32()",
+    FieldDescriptor.TYPE_FIXED64: "arrow::uint64()",
+    FieldDescriptor.TYPE_FIXED32: "arrow::uint32()",
+    FieldDescriptor.TYPE_BOOL: "arrow::boolean()",
+    FieldDescriptor.TYPE_STRING: "arrow::utf8()",
+    FieldDescriptor.TYPE_BYTES: "arrow::binary()",
+    FieldDescriptor.TYPE_UINT32: "arrow::uint32()",
+    FieldDescriptor.TYPE_ENUM: "arrow::int32()",
+    FieldDescriptor.TYPE_SFIXED32: "arrow::int32()",
+    FieldDescriptor.TYPE_SFIXED64: "arrow::int64()",
+    FieldDescriptor.TYPE_SINT32: "arrow::int32()",
+    FieldDescriptor.TYPE_SINT64: "arrow::uint64()",
 }
 
 
@@ -108,14 +136,14 @@ class BaseField:
         elif self.is_message():
             return self.field.message_type.full_name.replace(".", "::")
         else:
-            return CPP_TYPES[self.field.cpp_type]
+            return CPP_TYPES[self.field.type]
 
     def appender_type(self):
         assert self.is_message()
         return self.message_wrapper.appender_name()
 
     def cpp_type(self):
-        return CPP_TYPES[self.field.cpp_type]
+        return CPP_TYPES[self.field.type]
 
     def offset_type(self):
         # TODO: implement
@@ -125,11 +153,11 @@ class BaseField:
         if self.is_repeated_message():
             return f'arrow::field("{self.name()}", arrow::list(arrow::struct_({self.appender_type()}::FIELD_VECTOR)))'
         elif self.is_repeated():
-            return f'arrow::field("{self.name()}", arrow::list({ARROW_TYPES[self.field.cpp_type]}))'
+            return f'arrow::field("{self.name()}", arrow::list({ARROW_TYPES[self.field.type]}))'
         elif self.is_message():
             return f'arrow::field("{self.name()}", arrow::struct_({self.appender_type()}::FIELD_VECTOR))'
         else:
-            return f'arrow::field("{self.name()}", {ARROW_TYPES[self.field.cpp_type]})'
+            return f'arrow::field("{self.name()}", {ARROW_TYPES[self.field.type]})'
 
 
 class ReaderField(BaseField):
@@ -186,7 +214,7 @@ class ReaderField(BaseField):
             return ""
 
     def array_type(self):
-        return CPP_ARRAYS[self.field.cpp_type]
+        return CPP_ARRAYS[self.field.type]
 
     def struct_reader_members(self) -> Sequence[ClassMember]:
         if self.is_repeated_message():
@@ -221,7 +249,7 @@ class ReaderField(BaseField):
         else:
             yield ClassMember(
                 self.array_name(),
-                shared_ptr(CPP_ARRAYS[self.field.cpp_type]),
+                shared_ptr(CPP_ARRAYS[self.field.type]),
                 f'{self.array_caster()}(struct_array_->GetFieldByName("{self.name()}"))',
             )
 
@@ -255,7 +283,7 @@ class ReaderField(BaseField):
         else:
             yield ClassMember(
                 self.array_name(),
-                shared_ptr(CPP_ARRAYS[self.field.cpp_type]),
+                shared_ptr(CPP_ARRAYS[self.field.type]),
                 f"{self.array_caster()}({self.get_array_statement()})",
             )
 
@@ -295,7 +323,7 @@ class AppenderField(BaseField):
         if self.is_message():
             return self.appender_type()
         else:
-            return CPP_BUILDERS[self.field.cpp_type]
+            return CPP_BUILDERS[self.field.type]
 
     def is_repeated(self):
         return self.field.label == FieldDescriptor.LABEL_REPEATED

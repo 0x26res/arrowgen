@@ -60,7 +60,7 @@ def set_field(message: Message, field: FieldDescriptor, count: int):
     data = generate_field_data(field, count)
     if field.label == FieldDescriptor.LABEL_REPEATED:
         getattr(message, field.name).extend(data)
-    elif field.cpp_type == FieldDescriptor.CPPTYPE_MESSAGE:
+    elif field.type == FieldDescriptor.TYPE_MESSAGE:
         getattr(message, field.name).CopyFrom(data)
     else:
         setattr(message, field.name, data)
@@ -75,9 +75,9 @@ def generate_field_data(field: FieldDescriptor, count: int):
 
 
 def _generate_data(field: FieldDescriptor, count):
-    if field.cpp_type == FieldDescriptor.CPPTYPE_ENUM:
+    if field.cpp_type == FieldDescriptor.TYPE_ENUM:
         return _generate_enum(field.enum_type)
-    elif field.cpp_type == FieldDescriptor.CPPTYPE_MESSAGE:
+    elif field.cpp_type == FieldDescriptor.TYPE_MESSAGE:
         return generate_data(field.message_type, count)
     elif field.type in VALID_DATA:
         return random.choice(VALID_DATA[field.type])
@@ -96,7 +96,7 @@ def generate_for_file(file: str, output_dir: str, count: int = 10) -> List[str]:
 
 
 def generate_for_file_descriptor(
-        file_descriptor: FileDescriptor, output_dir: str, count: int
+    file_descriptor: FileDescriptor, output_dir: str, count: int
 ) -> List[str]:
     results = []
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
