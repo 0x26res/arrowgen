@@ -75,4 +75,4 @@ WIP
 - [ ] use union as schema for one of  
 - [ ] add test for repeated one of
 - [ ] Merge struct reader with reader
-- [ ] check chunk are aligned
+- [x] check chunk can be misaligned

@@ -49,6 +49,3 @@ VectorToColumnarTable(const std::vector<struct nested_repeated> &rows,
 arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
                                     std::vector<struct nested_repeated> &rows);
 
-
-arrow::Status VectorToColumnarTable(const std::vector<messages::OneofMessage> &rows,
-                                    std::shared_ptr<arrow::Table> *table);
