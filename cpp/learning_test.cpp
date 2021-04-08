@@ -12,6 +12,7 @@ BOOST_AUTO_TEST_CASE(CanYouHaveHeterogenousChunk) {
   builder1.Append(2);
   builder1.Append(3);
 
+
   auto array1 = builder1.Finish().ValueOrDie();
 
   arrow::Int32Builder builder2;

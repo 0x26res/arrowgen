@@ -39,14 +39,22 @@ arrow::Status {{wrapper.appender_name()}}::build(arrow::ArrayVector& arrays) {
 }
 
 
-
-
 std::vector<std::shared_ptr<arrow::ArrayBuilder>> {{wrapper.appender_name()}}::getBuilders() {
   std::vector<std::shared_ptr<arrow::ArrayBuilder>> results;
   {% for field in wrapper.appender_fields() -%}
   results.push_back({{field.main_builder_name()}});
   {% endfor -%}
   return results;
+}
+
+std::shared_ptr<arrow::Table> {{wrapper.appender_name()}}::build() {
+    std::shared_ptr<arrow::Table> table;
+    arrow::Status status = this->build(&table);
+    if (status == arrow::Status::OK()) {
+        return table;
+    } else {
+        throw std::runtime_error(status.message());
+    }
 }
 
 arrow::Status {{wrapper.appender_name()}}::build(std::shared_ptr<arrow::Table> * table) {

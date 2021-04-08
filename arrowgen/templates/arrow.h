@@ -23,6 +23,7 @@ class {{ wrapper.appender_name() }} {
     arrow::Status append(const char* bytes, size_t size);
     arrow::Status append({{wrapper.message_name()}} const& message);
     arrow::Status build(std::shared_ptr<arrow::Table>* table);
+    std::shared_ptr<arrow::Table> build();
     arrow::Status Finish(std::shared_ptr<arrow::Array>* array);
 
     std::vector<std::shared_ptr<arrow::ArrayBuilder>> getBuilders();
