@@ -50,11 +50,7 @@ def get_arrow_field(descriptor: FieldDescriptor) -> pyarrow.Field:
 
 
 def get_oneof(descriptor: OneofDescriptor) -> pyarrow.Field:
-    children = [
-        get_arrow_field(field)
-        for field in descriptor.fields
-        if field.containing_oneof is None
-    ]
+    children = [get_arrow_field(field) for field in descriptor.fields]
     return pyarrow.field(descriptor.name, pyarrow.union(children, "dense"))
 
 
@@ -63,7 +59,11 @@ def get_oneofs(descriptor: Descriptor) -> List[pyarrow.Field]:
 
 
 def get_arrow_fields(descriptor: Descriptor) -> List[pyarrow.Field]:
-    free_fields = [get_arrow_field(field) for field in descriptor.fields]
+    free_fields = [
+        get_arrow_field(field)
+        for field in descriptor.fields
+        if field.containing_oneof is None
+    ]
     oneofs = get_oneofs(descriptor)
     return free_fields + oneofs
 
@@ -75,8 +75,4 @@ def get_arrow_schema(descriptor: Descriptor) -> pyarrow.Schema:
 class SchemaTest(unittest.TestCase):
     def test_get_arrow_schema(self):
         for descriptor in get_all_descriptors():
-            print(get_arrow_schema(descriptor))
-
-    def test_one_of(self):
-        one_of = get_all_descriptors()[-1]
-        print(one_of)
+            self.assertIsInstance(get_arrow_schema(descriptor), pyarrow.Schema)

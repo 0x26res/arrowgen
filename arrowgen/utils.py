@@ -1,8 +1,10 @@
 import importlib
 import subprocess
 
+import typing
 
-def run_command(command):
+
+def run_command(command: typing.List[str]):
     results = subprocess.run(command, text=True, capture_output=True)
     if results.returncode != 0:
         raise RuntimeError(f"[{' '.join(command)}] Failed with {results.stderr}")
