@@ -98,3 +98,4 @@ Arrowgen works in 3 phases
 - [ ] merge type mapping (array, arraybuilder, type etc)
 - [ ] generate type mapping automatically
 - [ ] Consider using union array / union array builder
+- [ ] add python code to convert from arrow to protobuf 

@@ -43,7 +43,7 @@ VALID_CPP_DATA = {
 }
 
 
-def generate_data(descriptor: Descriptor, count: int):
+def generate_message(descriptor: Descriptor, count: int):
     message = descriptor._concrete_class()
     for one_of in descriptor.oneofs:
         one_of_index = random.randint(0, len(one_of.fields) - 1)
@@ -54,6 +54,10 @@ def generate_data(descriptor: Descriptor, count: int):
         if field.containing_oneof is None:
             set_field(message, field, count)
     return message
+
+
+def generate_messages(descriptor: Descriptor, count: int):
+    return [generate_message(descriptor, count) for _ in range(count)]
 
 
 def set_field(message: Message, field: FieldDescriptor, count: int):
@@ -78,7 +82,7 @@ def _generate_data(field: FieldDescriptor, count):
     if field.type == FieldDescriptor.TYPE_ENUM:
         return _generate_enum(field.enum_type)
     elif field.type == FieldDescriptor.TYPE_MESSAGE:
-        return generate_data(field.message_type, count)
+        return generate_message(field.message_type, count)
     elif field.type in VALID_DATA:
         return random.choice(VALID_DATA[field.type])
     else:
@@ -101,7 +105,7 @@ def generate_for_file_descriptor(
     results = []
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
     for message in file_descriptor.message_types_by_name.values():
-        data = [generate_data(message, count) for _ in range(count)]
+        data = [generate_message(message, count) for _ in range(count)]
         file_name = os.path.join(output_dir, message.name + ".jsonl")
         results.append(file_name)
 
