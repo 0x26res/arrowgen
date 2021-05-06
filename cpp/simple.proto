@@ -56,6 +56,8 @@ message DataRow {
   repeated bool bool_values = 32;
   repeated string string_values = 33;
   repeated TestEnum enum_values = 34;
+  SearchRequest request = 35;
+  repeated SearchRequest requests = 36;
 }
 
 enum ReturnCode {

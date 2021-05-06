@@ -7,7 +7,7 @@ from google.protobuf.json_format import MessageToJson
 from google.protobuf.pyext._message import Descriptor
 
 from arrowgen.generator import generate_for_descriptor, get_proto_module
-from tests.data_generator import generate_data, generate_for_file_descriptor
+from tests.data_generator import generate_message, generate_for_file_descriptor
 
 
 @lru_cache
@@ -22,7 +22,7 @@ def get_all_descriptors() -> List[Descriptor]:
 
 def _prepare_data(module):
     for message in module.message_types_by_name.values():
-        data = [generate_data(message, count=10) for i in range(10)]
+        data = [generate_message(message, count=10) for i in range(10)]
         with open("messages/" + message.name + ".jsonl", "w") as fp:
             for d in data:
                 fp.write(MessageToJson(d, indent=0).replace("\n", ""))
@@ -32,9 +32,9 @@ def _prepare_data(module):
 class TestDataGen(unittest.TestCase):
     def test_generate_some(self):
         simple = _get_simple_proto_module()
-        generate_data(simple.SearchRequest.DESCRIPTOR, 10)
-        generate_data(simple.DataRow.DESCRIPTOR, 10)
-        generate_data(simple.OneofMessage.DESCRIPTOR, 10)
+        generate_message(simple.SearchRequest.DESCRIPTOR, 10)
+        generate_message(simple.DataRow.DESCRIPTOR, 10)
+        generate_message(simple.OneofMessage.DESCRIPTOR, 10)
 
 
 class GeneratorTest(unittest.TestCase):
