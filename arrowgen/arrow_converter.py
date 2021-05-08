@@ -59,38 +59,36 @@ def calculate_offsets(
     return results
 
 
-def _extract_field_for_tuple(
-    message: Message, field_descriptor: FieldDescriptor
-) -> typing.Any:
-    if field_descriptor.containing_oneof is not None and not message.HasField(
-        field_descriptor.name
-    ):
-        return None
-    else:
-        value = getattr(message, field_descriptor.name)
-        if field_descriptor.label == FieldDescriptor.LABEL_REPEATED:
-            if field_descriptor.type == FieldDescriptor.TYPE_MESSAGE:
-                return [
-                    message_to_tuple(v, field_descriptor.message_type) for v in value
-                ]
-            else:
-                return list(value)
-        elif field_descriptor.message_type:
-            return message_to_tuple(value, field_descriptor.message_type)
-        else:
-            return value
+def messages_to_struct_array(
+    messages: typing.List[Message], message_descriptor: Descriptor
+) -> pyarrow.StructArray:
+    arrays = messages_to_arrays(messages, message_descriptor)
+    validity_mask = pyarrow.array(value is None for value in messages)
+    validity_bitmask = validity_mask.buffers()[1]
+    return pyarrow.StructArray.from_buffers(
+        pyarrow.struct(get_arrow_fields(message_descriptor)),
+        len(messages),
+        [validity_bitmask],
+        children=arrays,
+    )
 
 
-def message_to_tuple(
-    message: Message, message_descriptor: Descriptor
-) -> typing.Optional[typing.Tuple]:
-    if message is None:
-        return None
-    else:
-        return tuple(
-            _extract_field_for_tuple(message, field_descriptor)
-            for field_descriptor in message_descriptor.fields
-        )
+def repeated_messages_to_list_array(
+    messages: typing.List[typing.List[Message]], message_descriptor: Descriptor
+) -> pyarrow.ListArray:
+    flat_messages = [item for sublist in messages if sublist for item in sublist]
+    struct_array = messages_to_struct_array(flat_messages, message_descriptor)
+    offsets = calculate_offsets(messages)
+    buffers = [
+        pyarrow.array(value is None for value in messages).buffers()[1],
+        pyarrow.array(offsets, pyarrow.int32()).buffers()[1],
+    ]
+    return pyarrow.ListArray.from_buffers(
+        type=pyarrow.list_(struct_array.type),
+        length=len(messages),
+        buffers=buffers,
+        children=[struct_array],
+    )
 
 
 def get_field_array(
@@ -111,29 +109,11 @@ def get_field_array(
 
     if field_descriptor.type == FieldDescriptor.TYPE_MESSAGE:
         if field_descriptor.label == FieldDescriptor.LABEL_REPEATED:
-            offsets = calculate_offsets(values)
-            return pyarrow.ListArray.from_arrays(
-                offsets,
-                pyarrow.array(
-                    [
-                        message_to_tuple(item, field_descriptor.message_type)
-                        for sublist in values
-                        for item in sublist
-                    ],
-                    type=pyarrow.struct(
-                        get_arrow_fields(field_descriptor.message_type)
-                    ),
-                ),
+            return repeated_messages_to_list_array(
+                values, field_descriptor.message_type
             )
         else:
-            messages_tuples = [
-                message_to_tuple(value, field_descriptor.message_type)
-                for value in values
-            ]
-            return pyarrow.array(
-                messages_tuples,
-                type=pyarrow.struct(get_arrow_fields(field_descriptor.message_type)),
-            )
+            return messages_to_struct_array(values, field_descriptor.message_type)
     else:
         if field_descriptor.label == FieldDescriptor.LABEL_REPEATED:
             values = [list(value) for value in values]

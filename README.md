@@ -99,3 +99,5 @@ Arrowgen works in 3 phases
 - [ ] generate type mapping automatically
 - [ ] Consider using union array / union array builder
 - [ ] add python code to convert from arrow to protobuf 
+- [ ] add python code to convert from protobuf to pandas
+- [ ] add python code to convert from pandas to protobuf
