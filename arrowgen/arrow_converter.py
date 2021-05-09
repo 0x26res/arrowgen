@@ -63,7 +63,7 @@ def messages_to_struct_array(
     messages: typing.List[Message], message_descriptor: Descriptor
 ) -> pyarrow.StructArray:
     arrays = messages_to_arrays(messages, message_descriptor)
-    validity_mask = pyarrow.array(value is None for value in messages)
+    validity_mask = pyarrow.array(value is not None for value in messages)
     validity_bitmask = validity_mask.buffers()[1]
     return pyarrow.StructArray.from_buffers(
         pyarrow.struct(get_arrow_fields(message_descriptor)),
@@ -80,7 +80,7 @@ def repeated_messages_to_list_array(
     struct_array = messages_to_struct_array(flat_messages, message_descriptor)
     offsets = calculate_offsets(messages)
     buffers = [
-        pyarrow.array(value is None for value in messages).buffers()[1],
+        pyarrow.array(value is not None for value in messages).buffers()[1],
         pyarrow.array(offsets, pyarrow.int32()).buffers()[1],
     ]
     return pyarrow.ListArray.from_buffers(
@@ -139,25 +139,101 @@ def convert_scalar(scalar, field_descriptor: FieldDescriptor):
     return scalar.as_py()
 
 
+def struct_array_to_messages(
+    struct_array: pyarrow.StructArray, message_descriptor: Descriptor
+) -> typing.List[Message]:
+    assert len(struct_array.type) == len(message_descriptor.fields)
+    valid = struct_array.is_valid()
+    messages = [
+        message_descriptor._concrete_class() if is_valid.as_py() else None
+        for is_valid in valid
+    ]
+    for i, field_descriptor in enumerate(message_descriptor.fields):
+        extract_field(struct_array.field(i), field_descriptor, messages)
+    return messages
+
+
+def chunked_array_to_messages(
+    chunked_array: pyarrow.ChunkedArray, message_descriptor: Descriptor
+) -> typing.List[Message]:
+    if isinstance(chunked_array, pyarrow.ChunkedArray):
+        results = []
+        for chunk in chunked_array.chunks:
+            results.extend(struct_array_to_messages(chunk, message_descriptor))
+        return results
+    else:
+        assert isinstance(chunked_array, pyarrow.StructArray)
+        return struct_array_to_messages(chunked_array, message_descriptor)
+
+
+def list_array_to_list_of_messages(
+    list_array: pyarrow.ListArray, message_descriptor: Descriptor
+) -> typing.List[typing.List[Message]]:
+    values_view = list_array.values
+    values = struct_array_to_messages(values_view, message_descriptor)
+    offsets = list_array.offsets
+    is_valid = list_array.is_valid()
+    results = []
+    for i in range(len(list_array)):
+        if is_valid[i].as_py():
+            results.append(values[offsets[i].as_py() : offsets[i + 1].as_py()])
+        else:
+            results.append(None)
+    return results
+
+
+def chunked_array_to_list_of_messages(
+    chunked_array: pyarrow.ChunkedArray, message_descriptor: Descriptor
+) -> typing.List[typing.List[Message]]:
+    if isinstance(chunked_array, pyarrow.ChunkedArray):
+        results = []
+        for chunk in chunked_array.chunks:
+            results.extend(list_array_to_list_of_messages(chunk, message_descriptor))
+        return results
+    else:
+        assert isinstance(chunked_array, pyarrow.ListArray)
+        return list_array_to_list_of_messages(chunked_array, message_descriptor)
+
+
+def assign_values(
+    messages: typing.List[Message],
+    values: typing.List[typing.Any],
+    field_descriptor: FieldDescriptor,
+):
+    assert len(messages) == len(values)
+    if field_descriptor.label == FieldDescriptor.LABEL_REPEATED:
+        for message, value in zip(messages, values):
+            if message is not None and value is not None:
+                getattr(message, field_descriptor.name).extend(value)
+    elif field_descriptor.type == FieldDescriptor.TYPE_MESSAGE:
+        for message, value in zip(messages, values):
+            if message is not None and value is not None:
+                getattr(message, field_descriptor.name).CopyFrom(value)
+    else:
+        for message, value in zip(messages, values):
+            if message is not None and value is not None:
+                setattr(message, field_descriptor.name, value)
+
+
 def extract_field(
     array: pyarrow.Array,
     field_descriptor: FieldDescriptor,
     messages: typing.List[Message],
 ):
-    valid = array.is_valid()
-    for i, message in enumerate(messages):
-        if valid[i]:
-            scalar = array[i]
-            # TODO: delete
-            # print(type(scalar), scalar, field_descriptor.name)
-            field_value = convert_scalar(scalar, field_descriptor)
-            if field_descriptor.message_type or field_descriptor.containing_oneof:
-                # TODO: add supported for nested messages
-                pass
-            elif field_descriptor.label == FieldDescriptor.LABEL_REPEATED:
-                getattr(message, field_descriptor.name).extend(field_value)
-            else:
-                setattr(message, field_descriptor.name, field_value)
+    if field_descriptor.type == FieldDescriptor.TYPE_MESSAGE:
+        if field_descriptor.label == FieldDescriptor.LABEL_REPEATED:
+            values = chunked_array_to_list_of_messages(
+                array, field_descriptor.message_type
+            )
+        else:
+            values = chunked_array_to_messages(array, field_descriptor.message_type)
+    else:
+        valid_array = array.is_valid()
+        values = [
+            convert_scalar(array[i], field_descriptor) if valid else None
+            for i, valid in enumerate(valid_array)
+        ]
+    assign_values(messages, values, field_descriptor)
 
 
 def table_to_messages(
