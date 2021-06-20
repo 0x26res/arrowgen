@@ -86,3 +86,10 @@ message OneofMessage {
     SearchRequest search_request = 3;
   }
 }
+
+message WithOptionalMessage {
+  // TODO: enable when ready
+  // optional int32 optional_int = 1;
+  int32 not_optional_int = 2;
+
+}

@@ -36,8 +36,6 @@ class TestDataGen(unittest.TestCase):
         generate_message(simple.DataRow.DESCRIPTOR, 10)
         generate_message(simple.OneofMessage.DESCRIPTOR, 10)
 
-
-class GeneratorTest(unittest.TestCase):
     def test_generate(self):
         simple = _get_simple_proto_module()
         generate_for_file_descriptor(simple.DESCRIPTOR, "./messages", 10)
@@ -45,3 +43,10 @@ class GeneratorTest(unittest.TestCase):
 
     def test_get_all_descriptors(self):
         self.assertGreater(len(get_all_descriptors()), 6)
+
+    def test_optional(self):
+        descriptor = _get_simple_proto_module().WithOptionalMessage.DESCRIPTOR
+        while generate_data(descriptor, 10).HasField('optional_int'):
+            # Eventually we should have an optional
+            pass
+

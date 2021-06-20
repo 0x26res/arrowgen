@@ -43,12 +43,13 @@ VALID_CPP_DATA = {
 }
 
 
-def generate_message(descriptor: Descriptor, count: int):
+def generate_message(descriptor: Descriptor, count: int) -> Message:
     message = descriptor._concrete_class()
     for one_of in descriptor.oneofs:
-        one_of_index = random.randint(0, len(one_of.fields) - 1)
-        field = one_of.fields[one_of_index]
-        set_field(message, field, count)
+        one_of_index = random.randint(0, len(one_of.fields))
+        if one_of_index < len(one_of.fields):
+            field = one_of.fields[one_of_index]
+            set_field(message, field, count)
 
     for field in descriptor.fields:
         if field.containing_oneof is None:
@@ -60,7 +61,7 @@ def generate_messages(descriptor: Descriptor, count: int):
     return [generate_message(descriptor, count) for _ in range(count)]
 
 
-def set_field(message: Message, field: FieldDescriptor, count: int):
+def set_field(message: Message, field: FieldDescriptor, count: int) -> None:
     data = generate_field_data(field, count)
     if field.label == FieldDescriptor.LABEL_REPEATED:
         getattr(message, field.name).extend(data)

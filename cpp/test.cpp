@@ -19,9 +19,9 @@ template <class T> void compareProto(T const &l, T const &r) {
   google::protobuf::util::Status rstatus =
       google::protobuf::util::MessageToJsonString(r, &rstring);
   if (!lstatus.ok()) {
-    throw std::runtime_error(lstatus.error_message().as_string());
+    throw std::runtime_error(lstatus.ToString());
   } else if (!rstatus.ok()) {
-    throw std::runtime_error(rstatus.error_message().as_string());
+    throw std::runtime_error(rstatus.ToString());
   } else if (lstring != rstring) {
     throw std::runtime_error("\n" + lstring + '\n' + rstring);
   } else {
@@ -55,9 +55,8 @@ template <class T> std::vector<T> loadJson(std::string const &fileName) {
       T message;
       google::protobuf::util::Status status =
           google::protobuf::util::JsonStringToMessage(line, &message);
-      if (status != google::protobuf::util::Status::OK) {
-        throw std::runtime_error("[" + line + ']' +
-                                 status.error_message().as_string());
+      if (!status.ok()) {
+        throw std::runtime_error("[" + line + ']' + status.ToString());
       } else {
         messages.push_back(message);
       }
