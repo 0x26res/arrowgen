@@ -26,10 +26,7 @@ class LearningTest(unittest.TestCase):
 
     def test_struct_array_from_tuple_behavior(self):
         array = pyarrow.array(
-            [
-                None,
-                (1, "foo"),
-            ],
+            [None, (1, "foo")],
             type=pyarrow.struct(
                 [
                     pyarrow.field("col1", pyarrow.int64()),
@@ -103,10 +100,7 @@ class LearningTest(unittest.TestCase):
         list_array = pyarrow.ListArray.from_buffers(
             type=pyarrow.list_(struct_type),
             length=4,
-            buffers=[
-                list_validity_buffer,
-                list_offsets_buffer,
-            ],
+            buffers=[list_validity_buffer, list_offsets_buffer],
             children=[struct_array],
         )
         print(list_array)

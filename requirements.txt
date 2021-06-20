@@ -1,7 +1,5 @@
-
-protobuf==3.17.3
+ 9protobuf==3.17.3
 jinja2==2.11.2
-black==20.8b1
 pyarrow==3.0.0
 pandas==1.2.4
 tabulate==0.8.9

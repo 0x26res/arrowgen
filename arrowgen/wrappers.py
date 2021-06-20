@@ -175,7 +175,7 @@ class BaseField:
         return f"{self.oneof_name()}_case"
 
     def oneof_case(self):
-        """ eg: kFoo """
+        """eg: kFoo"""
 
         upper_camel = (
             self.field.camelcase_name[0].upper() + self.field.camelcase_name[1:]
@@ -364,9 +364,7 @@ class AppenderField(BaseField):
     def members(self) -> Sequence[ClassMember]:
         if self.is_repeated_message():
             yield ClassMember(
-                self.appender_name(),
-                self.appender_type(),
-                "pool",
+                self.appender_name(), self.appender_type(), "pool"
             ).to_shared_ptr()
             yield ClassMember(
                 self.struct_builder_name(),
@@ -391,9 +389,7 @@ class AppenderField(BaseField):
             )
         elif self.is_message():
             yield ClassMember(
-                self.appender_name(),
-                self.appender_type(),
-                "pool",
+                self.appender_name(), self.appender_type(), "pool"
             ).to_shared_ptr()
             yield ClassMember(
                 self.struct_builder_name(),
@@ -430,7 +426,7 @@ class AppenderField(BaseField):
             yield f"ARROW_RETURN_NOT_OK({self.builder_name()}->AppendNull());"
 
     def exists_append_statements(self) -> Iterator[str]:
-        """ TODO: Use jinja for this """
+        """TODO: Use jinja for this"""
         if self.is_repeated_message():
             yield f"ARROW_RETURN_NOT_OK({self.list_builder_name()}->Append());"
             yield f"for (const {self.message_wrapper.message_name()}& value : message.{self.name()}())"

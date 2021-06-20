@@ -2,7 +2,7 @@ import argparse
 import os
 import pathlib
 import random
-from typing import List
+import typing
 
 from google.protobuf.descriptor import (
     FieldDescriptor,
@@ -57,7 +57,7 @@ def generate_message(descriptor: Descriptor, count: int) -> Message:
     return message
 
 
-def generate_messages(descriptor: Descriptor, count: int):
+def generate_messages(descriptor: Descriptor, count: int) -> typing.List[Message]:
     return [generate_message(descriptor, count) for _ in range(count)]
 
 
@@ -95,14 +95,14 @@ def _generate_enum(enum: EnumDescriptor):
     return random.choice(enum.values).index
 
 
-def generate_for_file(file: str, output_dir: str, count: int = 10) -> List[str]:
+def generate_for_file(file: str, output_dir: str, count: int = 10) -> typing.List[str]:
     file_descriptor = get_proto_module(file).DESCRIPTOR
     return generate_for_file_descriptor(file_descriptor, output_dir, count)
 
 
 def generate_for_file_descriptor(
     file_descriptor: FileDescriptor, output_dir: str, count: int
-) -> List[str]:
+) -> typing.List[str]:
     results = []
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
     for message in file_descriptor.message_types_by_name.values():

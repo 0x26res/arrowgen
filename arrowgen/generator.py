@@ -14,10 +14,7 @@ from arrowgen.wrappers import FileWrapper
 
 def clang_format(code: str) -> str:
     results = subprocess.run(
-        ["clang-format"],
-        input=code,
-        text=True,
-        capture_output=True,
+        ["clang-format"], input=code, text=True, capture_output=True
     )
     if results.returncode != 0:
         raise RuntimeError(results.stderr)
@@ -56,12 +53,7 @@ def get_proto_module(proto_file: str):
     with tempfile.TemporaryDirectory() as tempdir:
         include = pathlib.Path(proto_file).parent.as_posix()
         run_command(
-            [
-                "protoc",
-                "--proto_path=" + include,
-                proto_file,
-                "--python_out=" + tempdir,
-            ]
+            ["protoc", "--proto_path=" + include, proto_file, "--python_out=" + tempdir]
         )
         python_file = os.path.join(
             tempdir, os.path.basename(proto_file[:-6]) + "_pb2.py"
