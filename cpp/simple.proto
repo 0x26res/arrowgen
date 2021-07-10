@@ -79,6 +79,10 @@ message RepeatedNestedMessage {
   repeated DataRow data_rows = 2;
 }
 
+message RepeatedNestedMessageSimple {
+  repeated SearchResult search_results = 1;
+}
+
 message OneofMessage {
   oneof oneof_field {
     int32 foo = 1;

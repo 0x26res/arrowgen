@@ -169,22 +169,9 @@ class BaseField:
         assert self.is_oneof()
         return self.field.containing_oneof.name
 
-    def oneof_case_name(self):
-        """oneof_field_case"""
-        assert self.is_oneof()
-        return f"{self.oneof_name()}_case"
-
-    def oneof_case(self):
-        """eg: kFoo"""
-
-        upper_camel = (
-            self.field.camelcase_name[0].upper() + self.field.camelcase_name[1:]
-        )
-        return f"{self.containing_class()}::k{upper_camel}"
-
     def has_statement(self):
         assert self.is_oneof()
-        return f"{self.oneof_case_name()}() == {self.oneof_case()}"
+        return f"has_{self.name()}()"
 
     def containing_class(self):
         return self.field.containing_type.full_name.replace(".", "::")
@@ -259,7 +246,7 @@ class ReaderField(BaseField):
             yield ClassMember(
                 self.array_name(),
                 self.struct_reader_type(),
-                f'{self.array_caster()}(struct_array_->GetFieldByName("{self.name()}"))',
+                f"{self.array_caster()}({self.list_array_name()}->values())",
             )
 
         elif self.is_repeated():
@@ -374,7 +361,7 @@ class AppenderField(BaseField):
             yield ClassMember(
                 self.list_builder_name(),
                 "arrow::ListBuilder",
-                f"pool, {self.struct_builder_name()}, {self.message_wrapper.data_type_statement()}",
+                f"pool, {self.struct_builder_name()}, arrow::list({self.message_wrapper.data_type_statement()})",
             ).to_shared_ptr()
         elif self.is_repeated():
             yield ClassMember(

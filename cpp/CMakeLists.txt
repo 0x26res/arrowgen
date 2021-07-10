@@ -8,12 +8,15 @@ SET(Protobuf_PROTOC_EXECUTABLE "/usr/local/bin/protoc") # Some issue with snap p
 execute_process(COMMAND ${Protobuf_PROTOC_EXECUTABLE} --version
         OUTPUT_VARIABLE _PROTOBUF_PROTOC_EXECUTABLE_VERSION)
 
-MESSAGE(${Protobuf_PROTOC_EXECUTABLE} --version)
-MESSAGE("${_PROTOBUF_PROTOC_EXECUTABLE_VERSION} FOOOOOO")
 
 INCLUDE(FindProtobuf)
 FIND_PACKAGE(Protobuf REQUIRED)
 FIND_PACKAGE(Arrow REQUIRED)
+FIND_PACKAGE(Parquet CONFIG REQUIRED
+        PATHS /usr/lib/x86_64-linux-gnu/cmake/arrow
+        NO_DEFAULT_PATH
+        )
+
 
 FIND_PACKAGE(Boost COMPONENTS system filesystem unit_test_framework REQUIRED)
 
@@ -31,6 +34,8 @@ ADD_CUSTOM_COMMAND(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/simple.arrow.cc ${CMAKE_CURRENT_BINARY_DIR}/simple.arrow.h
         COMMAND ${PYTHON} ${ARROWGEN}/arrowgen/__main__.py ${CMAKE_CURRENT_SOURCE_DIR}/simple.proto
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/simple.proto ${PythonFiles} ${TemplateFiles}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Generating arrow appender"
 )
 
 
@@ -46,13 +51,14 @@ ADD_EXECUTABLE(
         ${PROTO_SRC}
         ${CMAKE_CURRENT_BINARY_DIR}/simple.arrow.cc
         )
-TARGET_LINK_LIBRARIES(test_exe PRIVATE ${Protobuf_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} arrow_shared)
+TARGET_LINK_LIBRARIES(test_exe PRIVATE ${Protobuf_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} arrow_shared parquet_shared)
 
 
 ADD_CUSTOM_COMMAND(
         TARGET test_exe POST_BUILD
         COMMAND ${PYTHON} ${ARROWGEN}/tests/data_generator.py ${CMAKE_CURRENT_SOURCE_DIR}/simple.proto --output_dir=${CMAKE_CURRENT_BINARY_DIR}/data
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/simple.proto ${PythonFiles} ${TemplateFiles}
+        COMMENT "Generating data in ${CMAKE_CURRENT_BINARY_DIR}/data"
 )
 
 

@@ -52,7 +52,7 @@ std::vector<std::shared_ptr<arrow::ArrayBuilder>> {{wrapper.appender_name()}}::g
 arrow::Status {{wrapper.appender_name()}}::build(std::shared_ptr<arrow::Table> * table) {
     arrow::ArrayVector arrays;
     ARROW_RETURN_NOT_OK(this->build(arrays));
-    std::shared_ptr<arrow::Schema> schema = std::make_shared<arrow::Schema>({{wrapper.appender_name()}}::FIELD_VECTOR);
+    const std::shared_ptr<arrow::Schema> schema = {{wrapper.appender_name()}}::SCHEMA;
     *table = arrow::Table::Make(
         schema,
         arrays
