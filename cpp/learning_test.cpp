@@ -59,8 +59,8 @@ BOOST_AUTO_TEST_CASE(IsThereABugWithArrays) {
   const std::shared_ptr<arrow::DataType> listDataType =
       arrow::list(structDataType);
 
-  const std::shared_ptr<arrow::Schema> schema = arrow::schema({
-      arrow::field("search_results" , listDataType) });
+  const std::shared_ptr<arrow::Schema> schema =
+      arrow::schema({arrow::field("search_results", listDataType)});
 
   arrow::MemoryPool *pool = arrow::default_memory_pool();
   std::shared_ptr<arrow::Int32Builder> return_code_builder =
@@ -68,30 +68,33 @@ BOOST_AUTO_TEST_CASE(IsThereABugWithArrays) {
   std::shared_ptr<arrow::StringBuilder> message_builder =
       std::make_shared<arrow::StringBuilder>(pool);
 
-  std::vector<std::shared_ptr<arrow::ArrayBuilder>> fieldBuilder ={
-      return_code_builder, message_builder
-  };
+  std::vector<std::shared_ptr<arrow::ArrayBuilder>> fieldBuilder = {
+      return_code_builder, message_builder};
   std::shared_ptr<arrow::StructBuilder> search_results_struct_builder =
-      std::make_shared<arrow::StructBuilder>(structDataType, pool, fieldBuilder);
+      std::make_shared<arrow::StructBuilder>(structDataType, pool,
+                                             fieldBuilder);
   std::shared_ptr<arrow::ListBuilder> search_results_list_builder_(
       std::make_shared<arrow::ListBuilder>(pool, search_results_struct_builder,
                                            listDataType));
-//
-//  std::shared_ptr<arrow::Array> return_code_array;
-//  return_code_builder->Finish(&return_code_array);
-//
+  //
+  //  std::shared_ptr<arrow::Array> return_code_array;
+  //  return_code_builder->Finish(&return_code_array);
+  //
   std::shared_ptr<arrow::Array> array;
   search_results_list_builder_->Finish(&array);
 
   std::vector<std::shared_ptr<arrow::Array>> arrays;
   arrays.push_back(array);
 
-  static std::shared_ptr<arrow::Table> table = arrow::Table::Make(schema, arrays);
+  static std::shared_ptr<arrow::Table> table =
+      arrow::Table::Make(schema, arrays);
 
-  std::cout << "Required schema:     "  << *schema << std::endl;
+  std::cout << "Required schema:     " << *schema << std::endl;
   std::cout << "Table schema:        " << *table->schema() << std::endl;
-  std::cout << "Col 0 array dtype:   " << *table->column(0)->type() << std::endl;
-  std::cout << "Col 0 builder dtype: " << *search_results_list_builder_->type() << std::endl;
+  std::cout << "Col 0 array dtype:   " << *table->column(0)->type()
+            << std::endl;
+  std::cout << "Col 0 builder dtype: " << *search_results_list_builder_->type()
+            << std::endl;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

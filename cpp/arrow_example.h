@@ -3,10 +3,9 @@
 
 #endif // ARROWGENTEST_ARROW_EXAMPLE_H
 
-
-#include <simple.pb.h>
 #include <arrow/api.h>
 #include <ostream>
+#include <simple.pb.h>
 #include <variant>
 
 // While we want to use columnar data structures to build efficient operations,
@@ -48,4 +47,3 @@ VectorToColumnarTable(const std::vector<struct nested_repeated> &rows,
 
 arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
                                     std::vector<struct nested_repeated> &rows);
-

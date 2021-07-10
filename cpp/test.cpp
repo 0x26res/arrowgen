@@ -22,9 +22,10 @@ void writeTable(std::shared_ptr<arrow::Table> const &table,
   std::shared_ptr<arrow::io::FileOutputStream> outfile;
   PARQUET_ASSIGN_OR_THROW(outfile, arrow::io::FileOutputStream::Open(fileName));
   PARQUET_THROW_NOT_OK(parquet::arrow::WriteTable(
-      *table, arrow::default_memory_pool(), outfile,
-      100,
-      parquet::WriterProperties::Builder().version(parquet::ParquetVersion::PARQUET_2_0)->build()));
+      *table, arrow::default_memory_pool(), outfile, 100,
+      parquet::WriterProperties::Builder()
+          .version(parquet::ParquetVersion::PARQUET_2_0)
+          ->build()));
 }
 
 template <class T> void compareProto(T const &l, T const &r) {
