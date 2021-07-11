@@ -101,3 +101,7 @@ Arrowgen works in 3 phases
 - [x] add python code to convert from arrow to protobuf 
 - [ ] add python code to convert from protobuf to pandas
 - [ ] add python code to convert from pandas to protobuf
+- [ ] tame the test log
+- [ ] add script to run all tests (build + python + c++)
+- [ ] go through generated code and try to simplify
+- [ ] Do we need the struct reader? probably

@@ -22,20 +22,17 @@ BOOST_AUTO_TEST_CASE(CanYouHaveHeterogenousChunk) {
 
   auto array2 = builder2.Finish().ValueOrDie();
   arrow::ArrayVector arrays12({array1, array2});
-  auto chunk12 =
-      arrow::ChunkedArray::Make(arrays12, arrow::int32()).ValueOrDie();
+  auto chunk12 = arrow::ChunkedArray::Make(arrays12, arrow::int32()).ValueOrDie();
 
   arrow::ArrayVector arrays21({array2, array1});
-  auto chunk21 =
-      arrow::ChunkedArray::Make(arrays12, arrow::int32()).ValueOrDie();
+  auto chunk21 = arrow::ChunkedArray::Make(arrays12, arrow::int32()).ValueOrDie();
 
   auto schema = arrow::schema({
       arrow::field("col1", arrow::int32()),
       arrow::field("col2", arrow::int32()),
   });
 
-  std::shared_ptr<arrow::Table> table =
-      arrow::Table::Make(schema, {chunk12, chunk21});
+  std::shared_ptr<arrow::Table> table = arrow::Table::Make(schema, {chunk12, chunk21});
 
   BOOST_REQUIRE_EQUAL(5, table->num_rows());
 
@@ -50,51 +47,37 @@ BOOST_AUTO_TEST_CASE(CanYouHaveHeterogenousChunk) {
 
 /** TODO: illustrate the fact that it guesses the dtype wrong */
 BOOST_AUTO_TEST_CASE(IsThereABugWithArrays) {
-  const arrow::FieldVector fields = {
-      arrow::field("return_code", arrow::int32()),
-      arrow::field("message", arrow::utf8())};
+  const arrow::FieldVector fields = {arrow::field("return_code", arrow::int32()),
+                                     arrow::field("message", arrow::utf8())};
 
-  const std::shared_ptr<arrow::DataType> structDataType =
-      arrow::struct_(fields);
-  const std::shared_ptr<arrow::DataType> listDataType =
-      arrow::list(structDataType);
+  const std::shared_ptr<arrow::DataType> struct_data_type = arrow::struct_(fields);
+  const std::shared_ptr<arrow::DataType> list_of_struct_data_type = arrow::list(struct_data_type);
 
   const std::shared_ptr<arrow::Schema> schema =
-      arrow::schema({arrow::field("search_results", listDataType)});
+      arrow::schema({arrow::field("search_results", list_of_struct_data_type)});
 
   arrow::MemoryPool *pool = arrow::default_memory_pool();
-  std::shared_ptr<arrow::Int32Builder> return_code_builder =
-      std::make_shared<arrow::Int32Builder>(pool);
-  std::shared_ptr<arrow::StringBuilder> message_builder =
-      std::make_shared<arrow::StringBuilder>(pool);
 
-  std::vector<std::shared_ptr<arrow::ArrayBuilder>> fieldBuilder = {
-      return_code_builder, message_builder};
-  std::shared_ptr<arrow::StructBuilder> search_results_struct_builder =
-      std::make_shared<arrow::StructBuilder>(structDataType, pool,
-                                             fieldBuilder);
-  std::shared_ptr<arrow::ListBuilder> search_results_list_builder_(
-      std::make_shared<arrow::ListBuilder>(pool, search_results_struct_builder,
-                                           listDataType));
-  //
-  //  std::shared_ptr<arrow::Array> return_code_array;
-  //  return_code_builder->Finish(&return_code_array);
-  //
-  std::shared_ptr<arrow::Array> array;
-  search_results_list_builder_->Finish(&array);
+  std::shared_ptr<arrow::Int32Builder> return_code_builder = std::make_shared<arrow::Int32Builder>(pool);
+  std::shared_ptr<arrow::StringBuilder> message_builder = std::make_shared<arrow::StringBuilder>(pool);
+  std::vector<std::shared_ptr<arrow::ArrayBuilder>> struct_fields_builders = {return_code_builder, message_builder};
 
-  std::vector<std::shared_ptr<arrow::Array>> arrays;
-  arrays.push_back(array);
+  std::shared_ptr<arrow::StructBuilder> struct_builder =
+      std::make_shared<arrow::StructBuilder>(struct_data_type, pool, struct_fields_builders);
+  std::shared_ptr<arrow::ListBuilder> list_builder(
+      std::make_shared<arrow::ListBuilder>(pool, struct_builder, list_of_struct_data_type));
 
-  static std::shared_ptr<arrow::Table> table =
-      arrow::Table::Make(schema, arrays);
+  BOOST_REQUIRE(list_builder->type()->Equals(list_of_struct_data_type));
 
-  std::cout << "Required schema:     " << *schema << std::endl;
-  std::cout << "Table schema:        " << *table->schema() << std::endl;
-  std::cout << "Col 0 array dtype:   " << *table->column(0)->type()
-            << std::endl;
-  std::cout << "Col 0 builder dtype: " << *search_results_list_builder_->type()
-            << std::endl;
+  // This should not be allowed:
+  std::shared_ptr<arrow::ListBuilder> list_builder_using_struct_dtype(
+      std::make_shared<arrow::ListBuilder>(pool, struct_builder, struct_data_type));
+
+  std::shared_ptr<arrow::DataType> wrong_data_type =
+      std::make_shared<arrow::ListType>(arrow::field("return_code", struct_data_type));
+
+  BOOST_REQUIRE(!list_builder_using_struct_dtype->type()->Equals(list_of_struct_data_type));
+  BOOST_REQUIRE(list_builder_using_struct_dtype->type()->Equals(wrong_data_type));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

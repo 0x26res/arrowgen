@@ -103,5 +103,24 @@ class LearningTest(unittest.TestCase):
             buffers=[list_validity_buffer, list_offsets_buffer],
             children=[struct_array],
         )
+        self.assertEqual(list_array.type, pyarrow.list_(struct_type))
         print(list_array)
         print(list_array.to_pandas().to_markdown())
+
+    def test_list_array_from_buffers_guess_type(self):
+        struct_type = pyarrow.struct([pyarrow.field("foo", pyarrow.string())])
+        struct_array = pyarrow.StructArray.from_arrays(
+            [pyarrow.array([], type=pyarrow.string())], fields=list(struct_type)
+        )
+
+        list_validity_mask = pyarrow.array([], type=pyarrow.bool_())
+        list_validity_buffer = list_validity_mask.buffers()[1]
+        list_offsets_buffer = pyarrow.array([], pyarrow.int32()).buffers()[1]
+
+        list_array = pyarrow.ListArray.from_buffers(
+            type=struct_type,
+            length=4,
+            buffers=[list_validity_buffer, list_offsets_buffer],
+            children=[struct_array],
+        )
+        self.assertEqual(list_array.type, pyarrow.list_(struct_type))

@@ -44,12 +44,12 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 
 ADD_EXECUTABLE(
         test_exe
-        ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/arrow_example_test.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/learning_test.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/arrow_example.cpp
         ${PROTO_SRC}
         ${CMAKE_CURRENT_BINARY_DIR}/simple.arrow.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/arrow_example.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/arrow_example_test.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/learning_test.cpp
         )
 TARGET_LINK_LIBRARIES(test_exe PRIVATE ${Protobuf_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} arrow_shared parquet_shared)
 

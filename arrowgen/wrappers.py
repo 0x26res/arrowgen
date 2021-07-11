@@ -19,7 +19,7 @@ CPP_TYPES = {
     FieldDescriptor.TYPE_SFIXED32: "int32_t",
     FieldDescriptor.TYPE_SFIXED64: "int64_t",
     FieldDescriptor.TYPE_SINT32: "int32_t",
-    FieldDescriptor.TYPE_SINT64: "uint64_t",
+    FieldDescriptor.TYPE_SINT64: "int64_t",
 }
 
 CPP_BUILDERS = {
@@ -77,7 +77,7 @@ ARROW_TYPES = {
     FieldDescriptor.TYPE_SFIXED32: "arrow::int32()",
     FieldDescriptor.TYPE_SFIXED64: "arrow::int64()",
     FieldDescriptor.TYPE_SINT32: "arrow::int32()",
-    FieldDescriptor.TYPE_SINT64: "arrow::uint64()",
+    FieldDescriptor.TYPE_SINT64: "arrow::int64()",
 }
 
 

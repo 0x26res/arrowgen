@@ -43,8 +43,7 @@ using arrow::ListBuilder;
 // builders, a top-level `arrow::ListBuilder` that builds the array of offsets
 // and a nested `arrow::DoubleBuilder` that constructs the underlying values
 // array that is referenced by the offsets in the former array.
-arrow::Status VectorToColumnarTable(const std::vector<struct data_row> &rows,
-                                    std::shared_ptr<arrow::Table> *table) {
+arrow::Status VectorToColumnarTable(const std::vector<struct data_row> &rows, std::shared_ptr<arrow::Table> *table) {
   // The builders are more efficient using
   // arrow::jemalloc::MemoryPool::default_pool() as this can increase the size
   // of the underlying memory regions in-place. At the moment, arrow::jemalloc
@@ -55,8 +54,7 @@ arrow::Status VectorToColumnarTable(const std::vector<struct data_row> &rows,
   DoubleBuilder cost_builder(pool);
   ListBuilder components_builder(pool, std::make_shared<DoubleBuilder>(pool));
   // The following builder is owned by components_builder.
-  DoubleBuilder &cost_components_builder =
-      *(static_cast<DoubleBuilder *>(components_builder.value_builder()));
+  DoubleBuilder &cost_components_builder = *(static_cast<DoubleBuilder *>(components_builder.value_builder()));
 
   // Now we can loop over our existing data and insert it into the builders. The
   // `Append` calls here may fail (e.g. we cannot allocate enough additional
@@ -71,8 +69,7 @@ arrow::Status VectorToColumnarTable(const std::vector<struct data_row> &rows,
     ARROW_RETURN_NOT_OK(components_builder.Append());
     // Store the actual values. The final nullptr argument tells the underyling
     // builder that all added values are valid, i.e. non-null.
-    ARROW_RETURN_NOT_OK(cost_components_builder.AppendValues(
-        row.cost_components.data(), row.cost_components.size()));
+    ARROW_RETURN_NOT_OK(cost_components_builder.AppendValues(row.cost_components.data(), row.cost_components.size()));
   }
 
   // At the end, we finalise the arrays, declare the (type) schema and combine
@@ -98,14 +95,12 @@ arrow::Status VectorToColumnarTable(const std::vector<struct data_row> &rows,
   // ownership of all referenced data, thus we don't have to care about
   // undefined references once we leave the scope of the function building the
   // table and its underlying arrays.
-  *table =
-      arrow::Table::Make(schema, {id_array, cost_array, cost_components_array});
+  *table = arrow::Table::Make(schema, {id_array, cost_array, cost_components_array});
 
   return arrow::Status::OK();
 }
 
-arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
-                                    std::vector<struct data_row> *rows) {
+arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table, std::vector<struct data_row> *rows) {
   // To convert an Arrow table back into the same row-wise representation as in
   // the above section, we first will check that the table conforms to our
   // expected schema and then will build up the vector of rows incrementally.
@@ -134,14 +129,10 @@ arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
   // for double arrays, this cannot be done for the accompanying bitmap as often
   // the slicing border would be inside a byte.
 
-  auto ids =
-      std::static_pointer_cast<arrow::Int64Array>(table->column(0)->chunk(0));
-  auto costs =
-      std::static_pointer_cast<arrow::DoubleArray>(table->column(1)->chunk(0));
-  auto cost_components =
-      std::static_pointer_cast<arrow::ListArray>(table->column(2)->chunk(0));
-  auto cost_components_values =
-      std::static_pointer_cast<arrow::DoubleArray>(cost_components->values());
+  auto ids = std::static_pointer_cast<arrow::Int64Array>(table->column(0)->chunk(0));
+  auto costs = std::static_pointer_cast<arrow::DoubleArray>(table->column(1)->chunk(0));
+  auto cost_components = std::static_pointer_cast<arrow::ListArray>(table->column(2)->chunk(0));
+  auto cost_components_values = std::static_pointer_cast<arrow::DoubleArray>(cost_components->values());
   // To enable zero-copy slices, the native values pointer might need to account
   // for this slicing offset. This is not needed for the higher level functions
   // like Value(…) that already account for this offset internally.
@@ -161,9 +152,8 @@ arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
   return arrow::Status::OK();
 }
 
-arrow::Status
-VectorToColumnarTable(const std::vector<struct nested_repeated> &rows,
-                      std::shared_ptr<arrow::Table> *table) {
+arrow::Status VectorToColumnarTable(const std::vector<struct nested_repeated> &rows,
+                                    std::shared_ptr<arrow::Table> *table) {
   arrow::MemoryPool *pool = arrow::default_memory_pool();
 
   std::shared_ptr<arrow::DataType> row_data_type = arrow::struct_({
@@ -172,17 +162,12 @@ VectorToColumnarTable(const std::vector<struct nested_repeated> &rows,
       arrow::field("cost_components", arrow::list(arrow::float64())),
   });
 
-  std::shared_ptr<Int64Builder> id_builder =
-      std::make_shared<Int64Builder>(pool);
-  std::shared_ptr<DoubleBuilder> cost_builder =
-      std::make_shared<DoubleBuilder>(pool);
+  std::shared_ptr<Int64Builder> id_builder = std::make_shared<Int64Builder>(pool);
+  std::shared_ptr<DoubleBuilder> cost_builder = std::make_shared<DoubleBuilder>(pool);
   std::shared_ptr<ListBuilder> components_builder =
-      std::make_shared<ListBuilder>(pool,
-                                    std::make_shared<DoubleBuilder>(pool));
-  DoubleBuilder *cost_components_builder =
-      (static_cast<DoubleBuilder *>(components_builder->value_builder()));
-  std::vector<std::shared_ptr<arrow::ArrayBuilder>> builders = {
-      id_builder, cost_builder, components_builder};
+      std::make_shared<ListBuilder>(pool, std::make_shared<DoubleBuilder>(pool));
+  DoubleBuilder *cost_components_builder = (static_cast<DoubleBuilder *>(components_builder->value_builder()));
+  std::vector<std::shared_ptr<arrow::ArrayBuilder>> builders = {id_builder, cost_builder, components_builder};
 
   std::shared_ptr<arrow::StructBuilder> rows_builder =
       std::make_shared<arrow::StructBuilder>(row_data_type, pool, builders);
@@ -208,72 +193,60 @@ VectorToColumnarTable(const std::vector<struct nested_repeated> &rows,
       std::make_shared<arrow::Field>("rows", arrow::list(row_data_type)),
   };
 
-  std::shared_ptr<arrow::Schema> schema =
-      std::make_shared<arrow::Schema>(schema_vector);
+  std::shared_ptr<arrow::Schema> schema = std::make_shared<arrow::Schema>(schema_vector);
 
   *table = arrow::Table::Make(schema, {struct_array});
 
   return arrow::Status::OK();
 }
 
-arrow::Status
-ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
-                      std::vector<struct nested_repeated> &results) {
+arrow::Status ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
+                                    std::vector<struct nested_repeated> &results) {
   std::vector<std::shared_ptr<arrow::Field>> row_fields = {
       arrow::field("id", arrow::int64()),
       arrow::field("cost", arrow::float64()),
       arrow::field("cost_components", arrow::list(arrow::float64()))};
-  std::shared_ptr<arrow::Field> rows_field =
-      arrow::field("rows", arrow::list(arrow::struct_(row_fields)));
+  std::shared_ptr<arrow::Field> rows_field = arrow::field("rows", arrow::list(arrow::struct_(row_fields)));
 
   std::vector<std::shared_ptr<arrow::Field>> message_fields;
   message_fields.push_back(rows_field);
-  std::shared_ptr<arrow::Schema> expected_schema =
-      std::make_shared<arrow::Schema>(message_fields);
+  std::shared_ptr<arrow::Schema> expected_schema = std::make_shared<arrow::Schema>(message_fields);
 
   if (!expected_schema->Equals(*table->schema())) {
     // The table doesn't have the expected schema thus we cannot directly
     // convert it to our target representation.
     std::stringstream ostream;
-    ostream << "Schemas are not matching: " << *table->schema() << " vs "
-            << *expected_schema;
+    ostream << "Schemas are not matching: " << *table->schema() << " vs " << *expected_schema;
     return arrow::Status::Invalid(ostream.str());
   }
 
   std::shared_ptr<arrow::ListArray> rows_list_array_ =
-      std::static_pointer_cast<arrow::ListArray>(
-          table->GetColumnByName("rows")->chunk(0));
+      std::static_pointer_cast<arrow::ListArray>(table->GetColumnByName("rows")->chunk(0));
   std::shared_ptr<arrow::StructArray> struct_array =
       std::static_pointer_cast<arrow::StructArray>(rows_list_array_->values());
 
   std::shared_ptr<arrow::Int64Array> ids =
-      std::static_pointer_cast<arrow::Int64Array>(
-          struct_array->GetFieldByName("id"));
+      std::static_pointer_cast<arrow::Int64Array>(struct_array->GetFieldByName("id"));
   std::shared_ptr<arrow::DoubleArray> costs =
-      std::static_pointer_cast<arrow::DoubleArray>(
-          struct_array->GetFieldByName("cost"));
+      std::static_pointer_cast<arrow::DoubleArray>(struct_array->GetFieldByName("cost"));
   std::shared_ptr<arrow::ListArray> cost_components =
-      std::static_pointer_cast<arrow::ListArray>(
-          struct_array->GetFieldByName("cost_components"));
-  auto cost_components_values =
-      std::static_pointer_cast<arrow::DoubleArray>(cost_components->values());
+      std::static_pointer_cast<arrow::ListArray>(struct_array->GetFieldByName("cost_components"));
+  auto cost_components_values = std::static_pointer_cast<arrow::DoubleArray>(cost_components->values());
 
   for (size_t row = 0; row < table->num_rows(); ++row) {
     nested_repeated record;
 
     for (size_t field_index = rows_list_array_->value_offset(row);
-         field_index < rows_list_array_->value_offset(row + 1); ++field_index) {
+         field_index < rows_list_array_->value_offset(row + 1);
+         ++field_index) {
       data_row nested_message;
       nested_message.id = ids->Value(field_index);
       nested_message.cost = costs->Value(field_index);
 
-      for (size_t cost_component_index =
-               cost_components->value_offset(field_index);
-           cost_component_index <
-           cost_components->value_offset(field_index + 1);
+      for (size_t cost_component_index = cost_components->value_offset(field_index);
+           cost_component_index < cost_components->value_offset(field_index + 1);
            ++cost_component_index) {
-        nested_message.cost_components.push_back(
-            cost_components_values->Value(cost_component_index));
+        nested_message.cost_components.push_back(cost_components_values->Value(cost_component_index));
       }
       record.rows.push_back(nested_message);
     }
@@ -284,21 +257,15 @@ ColumnarTableToVector(const std::shared_ptr<arrow::Table> &table,
 }
 
 bool data_row::operator==(const data_row &rhs) const {
-  return id == rhs.id && cost == rhs.cost &&
-         cost_components == rhs.cost_components;
+  return id == rhs.id && cost == rhs.cost && cost_components == rhs.cost_components;
 }
 bool data_row::operator!=(const data_row &rhs) const { return !(rhs == *this); }
 std::ostream &operator<<(std::ostream &os, const data_row &row) {
-  os << "id: " << row.id << " cost: " << row.cost
-     << " cost_components: " << row.cost_components.size();
+  os << "id: " << row.id << " cost: " << row.cost << " cost_components: " << row.cost_components.size();
   return os;
 }
-bool nested_repeated::operator==(const nested_repeated &rhs) const {
-  return rows == rhs.rows;
-}
-bool nested_repeated::operator!=(const nested_repeated &rhs) const {
-  return !(rhs == *this);
-}
+bool nested_repeated::operator==(const nested_repeated &rhs) const { return rows == rhs.rows; }
+bool nested_repeated::operator!=(const nested_repeated &rhs) const { return !(rhs == *this); }
 std::ostream &operator<<(std::ostream &os, const nested_repeated &repeated) {
 
   os << "rows: ";

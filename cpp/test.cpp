@@ -17,35 +17,33 @@
 
 namespace {
 
-void writeTable(std::shared_ptr<arrow::Table> const &table,
-                std::string const &fileName) {
+/** Write the data to parquet. This is useful to see if the writing part is working */
+void writeTable(std::shared_ptr<arrow::Table> const &table, std::string const &fileName) {
   std::shared_ptr<arrow::io::FileOutputStream> outfile;
   PARQUET_ASSIGN_OR_THROW(outfile, arrow::io::FileOutputStream::Open(fileName));
   PARQUET_THROW_NOT_OK(parquet::arrow::WriteTable(
-      *table, arrow::default_memory_pool(), outfile, 100,
-      parquet::WriterProperties::Builder()
-          .version(parquet::ParquetVersion::PARQUET_2_0)
-          ->build()));
+      *table,
+      arrow::default_memory_pool(),
+      outfile,
+      100,
+      parquet::WriterProperties::Builder().version(parquet::ParquetVersion::PARQUET_2_0)->build()));
 }
 
 template <class T> void compareProto(T const &l, T const &r) {
   std::string lstring, rstring;
-  google::protobuf::util::Status lstatus =
-      google::protobuf::util::MessageToJsonString(l, &lstring);
-  google::protobuf::util::Status rstatus =
-      google::protobuf::util::MessageToJsonString(r, &rstring);
+  google::protobuf::util::Status lstatus = google::protobuf::util::MessageToJsonString(l, &lstring);
+  google::protobuf::util::Status rstatus = google::protobuf::util::MessageToJsonString(r, &rstring);
   if (!lstatus.ok()) {
     throw std::runtime_error(lstatus.ToString());
   } else if (!rstatus.ok()) {
     throw std::runtime_error(rstatus.ToString());
   } else {
-    BOOST_REQUIRE_EQUAL(lstring, rstring);
+    bool are_same = lstring == rstring;
+    BOOST_REQUIRE(are_same);
   }
 }
 
-template <class T, class R>
-arrow::Status compare(std::shared_ptr<arrow::Table> table,
-                      std::vector<T> const &data) {
+template <class T, class R> arrow::Status compare(std::shared_ptr<arrow::Table> table, std::vector<T> const &data) {
   R reader(table);
   for (T const &message : data) {
     T actual;
@@ -67,8 +65,7 @@ template <class T> std::vector<T> loadJson(std::string const &fileName) {
     boost::trim(line);
     if (!line.empty()) {
       T message;
-      google::protobuf::util::Status status =
-          google::protobuf::util::JsonStringToMessage(line, &message);
+      google::protobuf::util::Status status = google::protobuf::util::JsonStringToMessage(line, &message);
       if (!status.ok()) {
         throw std::runtime_error("[" + line + ']' + status.ToString());
       } else {
@@ -79,8 +76,7 @@ template <class T> std::vector<T> loadJson(std::string const &fileName) {
   return messages;
 }
 
-template <class T, class A, class R>
-arrow::Status testDataType(std::vector<T> const data) {
+template <class T, class A, class R> arrow::Status testDataType(std::vector<T> const data) {
   A appender;
   for (T const &message : data) {
     ARROW_RETURN_NOT_OK(appender.append(message));
@@ -88,15 +84,13 @@ arrow::Status testDataType(std::vector<T> const data) {
   std::shared_ptr<arrow::Table> table;
   ARROW_RETURN_NOT_OK(appender.build(&table));
   BOOST_REQUIRE_EQUAL(table->num_rows(), data.size());
-  // TODO: remove once debugged + add tools?
   writeTable(table, T::GetDescriptor()->name() + ".pq");
   arrow::Status status = ::compare<T, R>(table, data);
   ARROW_RETURN_NOT_OK(status);
   std::cout << *table->schema() << std::endl;
   std::cout << table->num_rows() << " * " << table->num_columns() << std::endl;
 
-  std::shared_ptr<arrow::Table> table2 =
-      arrow::ConcatenateTables({table, table}).ValueOrDie();
+  std::shared_ptr<arrow::Table> table2 = arrow::ConcatenateTables({table, table}).ValueOrDie();
   std::vector<T> data2(data);
   for (T const &message : data) {
     data2.push_back(message);
@@ -116,69 +110,54 @@ arrow::Status testDataType(std::vector<T> const data) {
 BOOST_AUTO_TEST_SUITE(ReadFromDataTestSuite)
 
 BOOST_AUTO_TEST_CASE(test_TestMessage) {
-  std::vector<messages::TestMessage> messages =
-      loadJson<messages::TestMessage>("data/TestMessage.jsonl");
+  std::vector<messages::TestMessage> messages = loadJson<messages::TestMessage>("data/TestMessage.jsonl");
   arrow::Status status =
-      testDataType<messages::TestMessage, messages::TestMessageAppender,
-                   messages::TestMessageReader>(messages);
+      testDataType<messages::TestMessage, messages::TestMessageAppender, messages::TestMessageReader>(messages);
   BOOST_REQUIRE_EQUAL(arrow::Status::OK(), status);
 }
 
 BOOST_AUTO_TEST_CASE(test_DataRow) {
-  std::vector<messages::DataRow> messages =
-      loadJson<messages::DataRow>("data/DataRow.jsonl");
-  arrow::Status status =
-      testDataType<messages::DataRow, messages::DataRowAppender,
-                   messages::DataRowReader>(messages);
+  std::vector<messages::DataRow> messages = loadJson<messages::DataRow>("data/DataRow.jsonl");
+  arrow::Status status = testDataType<messages::DataRow, messages::DataRowAppender, messages::DataRowReader>(messages);
   BOOST_REQUIRE_EQUAL(arrow::Status::OK(), status);
 }
 
 BOOST_AUTO_TEST_CASE(test_SearchResult) {
-  std::vector<messages::SearchResult> messages =
-      loadJson<messages::SearchResult>("data/SearchResult.jsonl");
+  std::vector<messages::SearchResult> messages = loadJson<messages::SearchResult>("data/SearchResult.jsonl");
   arrow::Status status =
-      testDataType<messages::SearchResult, messages::SearchResultAppender,
-                   messages::SearchResultReader>(messages);
+      testDataType<messages::SearchResult, messages::SearchResultAppender, messages::SearchResultReader>(messages);
   BOOST_REQUIRE_EQUAL(arrow::Status::OK(), status);
 }
 
 BOOST_AUTO_TEST_CASE(test_NestedMessage) {
-  std::vector<messages::NestedMessage> messages =
-      loadJson<messages::NestedMessage>("data/NestedMessage.jsonl");
+  std::vector<messages::NestedMessage> messages = loadJson<messages::NestedMessage>("data/NestedMessage.jsonl");
   arrow::Status status =
-      testDataType<messages::NestedMessage, messages::NestedMessageAppender,
-                   messages::NestedMessageReader>(messages);
+      testDataType<messages::NestedMessage, messages::NestedMessageAppender, messages::NestedMessageReader>(messages);
   BOOST_REQUIRE_EQUAL(arrow::Status::OK(), status);
 }
 
 BOOST_AUTO_TEST_CASE(test_RepeatedNestedMessageSimple) {
   std::vector<messages::RepeatedNestedMessageSimple> messages =
-      loadJson<messages::RepeatedNestedMessageSimple>(
-          "data/RepeatedNestedMessageSimple.jsonl");
-  arrow::Status status =
-      testDataType<messages::RepeatedNestedMessageSimple,
-                   messages::RepeatedNestedMessageSimpleAppender,
-                   messages::RepeatedNestedMessageSimpleReader>(messages);
+      loadJson<messages::RepeatedNestedMessageSimple>("data/RepeatedNestedMessageSimple.jsonl");
+  arrow::Status status = testDataType<messages::RepeatedNestedMessageSimple,
+                                      messages::RepeatedNestedMessageSimpleAppender,
+                                      messages::RepeatedNestedMessageSimpleReader>(messages);
   BOOST_REQUIRE_EQUAL(arrow::Status::OK(), status);
 }
 
 BOOST_AUTO_TEST_CASE(test_RepeatedNestedMessage) {
   std::vector<messages::RepeatedNestedMessage> messages =
-      loadJson<messages::RepeatedNestedMessage>(
-          "data/RepeatedNestedMessage.jsonl");
-  arrow::Status status =
-      testDataType<messages::RepeatedNestedMessage,
-                   messages::RepeatedNestedMessageAppender,
-                   messages::RepeatedNestedMessageReader>(messages);
+      loadJson<messages::RepeatedNestedMessage>("data/RepeatedNestedMessage.jsonl");
+  arrow::Status status = testDataType<messages::RepeatedNestedMessage,
+                                      messages::RepeatedNestedMessageAppender,
+                                      messages::RepeatedNestedMessageReader>(messages);
   BOOST_REQUIRE_EQUAL(arrow::Status::OK(), status);
 }
 
 BOOST_AUTO_TEST_CASE(test_OneOfMessage) {
-  std::vector<messages::OneofMessage> messages =
-      loadJson<messages::OneofMessage>("data/OneofMessage.jsonl");
+  std::vector<messages::OneofMessage> messages = loadJson<messages::OneofMessage>("data/OneofMessage.jsonl");
   arrow::Status status =
-      testDataType<messages::OneofMessage, messages::OneofMessageAppender,
-                   messages::OneofMessageReader>(messages);
+      testDataType<messages::OneofMessage, messages::OneofMessageAppender, messages::OneofMessageReader>(messages);
   BOOST_REQUIRE_EQUAL(arrow::Status::OK(), status);
 }
 

@@ -124,16 +124,14 @@ arrow::Status {{wrapper.struct_reader_name()}}::GetValue(uint64_t const index, {
          value_index < {{field.list_array_name()}}->value_offset(index + 1);
          ++value_index) {
       {% if field.is_message() %}
-      {{field.array_name()}}.GetValue(index, *message.add_{{field.name()}}());
+      {{field.array_name()}}.GetValue(value_index, *message.add_{{field.name()}}());
       {% else %}
       message.add_{{field.name()}}({{field.optional_cast()}}{{field.array_name()}}->{{field.value_reader()}}(value_index) );
       {% endif %}
     }
     {% else %}
     {% if field.is_message() %}
-    {{field.value_type()}}* {{field.name()}} = new {{field.value_type()}}();
-    {{field.array_name()}}.GetValue(index, *{{field.name()}});
-    message.set_allocated_{{field.name()}}({{field.name()}});
+    {{field.array_name()}}.GetValue(index, *message.mutable_{{field.name()}}());
     {% else %}
     message.set_{{field.name()}}({{field.optional_cast()}}{{field.array_name()}}->{{field.value_reader()}}(index));
     {% endif %}
