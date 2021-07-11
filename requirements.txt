@@ -1,4 +1,4 @@
- 9protobuf==3.17.3
+protobuf==3.17.3
 jinja2==2.11.2
 pyarrow==4.0.1
 pandas==1.2.4
