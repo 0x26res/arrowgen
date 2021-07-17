@@ -1,5 +1,7 @@
 import typing
 
+import google.protobuf.timestamp_pb2
+import pandas
 import pyarrow
 from google.protobuf.descriptor import Descriptor, FieldDescriptor
 from google.protobuf.message import Message
@@ -24,8 +26,17 @@ ARROW_TYPES = {
 }
 
 
+def is_timestamp(field_descriptor: FieldDescriptor) -> bool:
+    return (
+        field_descriptor.type == FieldDescriptor.TYPE_MESSAGE
+        and field_descriptor.message_type.full_name == "google.protobuf.Timestamp"
+    )
+
+
 def get_arrow_type(field_descriptor: FieldDescriptor) -> pyarrow.DataType:
-    if field_descriptor.type == FieldDescriptor.TYPE_MESSAGE:
+    if is_timestamp(field_descriptor):
+        result = pyarrow.timestamp("ns")
+    elif field_descriptor.type == FieldDescriptor.TYPE_MESSAGE:
         result = pyarrow.struct(get_arrow_fields(field_descriptor.message_type))
     else:
         result = ARROW_TYPES[field_descriptor.type]
@@ -91,6 +102,23 @@ def repeated_messages_to_list_array(
     )
 
 
+def convert_timestamp_to_ns(
+    timestamps: typing.List[google.protobuf.timestamp_pb2.Timestamp],
+) -> typing.List[int]:
+    return [
+        timestamp.seconds * 1_000_000_000 + timestamp.nanos for timestamp in timestamps
+    ]
+
+
+def convert_to_proto_timestamp(
+    pd_timestamp: pandas.Timestamp,
+) -> google.protobuf.timestamp_pb2.Timestamp:
+    nanos = pd_timestamp.value
+    return google.protobuf.timestamp_pb2.Timestamp(
+        seconds=nanos // 1_000_000_000, nanos=nanos % 1_000_000_000
+    )
+
+
 def get_field_array(
     messages: typing.List[Message], field_descriptor: FieldDescriptor
 ) -> pyarrow.Array:
@@ -107,7 +135,10 @@ def get_field_array(
             for message in messages
         ]
 
-    if field_descriptor.type == FieldDescriptor.TYPE_MESSAGE:
+    if (
+        not is_timestamp(field_descriptor)
+        and field_descriptor.type == FieldDescriptor.TYPE_MESSAGE
+    ):
         if field_descriptor.label == FieldDescriptor.LABEL_REPEATED:
             return repeated_messages_to_list_array(
                 values, field_descriptor.message_type
@@ -116,7 +147,12 @@ def get_field_array(
             return messages_to_struct_array(values, field_descriptor.message_type)
     else:
         if field_descriptor.label == FieldDescriptor.LABEL_REPEATED:
-            values = [list(value) for value in values]
+            if is_timestamp(field_descriptor):
+                values = [convert_timestamp_to_ns(value) for value in values]
+            else:
+                values = [list(value) for value in values]
+        elif is_timestamp(field_descriptor):
+            values = convert_timestamp_to_ns(values)
         return pyarrow.array(values, get_arrow_type(field_descriptor))
 
 
@@ -204,10 +240,15 @@ def assign_values(
     if field_descriptor.label == FieldDescriptor.LABEL_REPEATED:
         for message, value in zip(messages, values):
             if message is not None and value is not None:
+                if is_timestamp(field_descriptor):
+                    value = [convert_to_proto_timestamp(v) for v in value]
                 getattr(message, field_descriptor.name).extend(value)
     elif field_descriptor.type == FieldDescriptor.TYPE_MESSAGE:
         for message, value in zip(messages, values):
             if message is not None and value is not None:
+                if is_timestamp(field_descriptor):
+                    value = convert_to_proto_timestamp(value)
+
                 getattr(message, field_descriptor.name).CopyFrom(value)
     else:
         for message, value in zip(messages, values):
@@ -220,7 +261,10 @@ def extract_field(
     field_descriptor: FieldDescriptor,
     messages: typing.List[Message],
 ):
-    if field_descriptor.type == FieldDescriptor.TYPE_MESSAGE:
+    if (
+        not is_timestamp(field_descriptor)
+        and field_descriptor.type == FieldDescriptor.TYPE_MESSAGE
+    ):
         if field_descriptor.label == FieldDescriptor.LABEL_REPEATED:
             values = chunked_array_to_list_of_messages(
                 array, field_descriptor.message_type

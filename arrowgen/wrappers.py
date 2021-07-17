@@ -3,6 +3,8 @@ from typing import Sequence, Iterator
 
 from google.protobuf.descriptor import FileDescriptor, Descriptor, FieldDescriptor
 
+from arrowgen import arrow_converter
+
 CPP_TYPES = {
     FieldDescriptor.TYPE_DOUBLE: "double",
     FieldDescriptor.TYPE_FLOAT: "float",
@@ -117,6 +119,9 @@ class BaseField:
 
     def oneof_name(self):
         return self.field.containing_oneof.name
+
+    def is_timestamp(self):
+        return arrow_converter.is_timestamp(self.field)
 
     def is_repeated_message(self):
         return self.is_repeated() and self.is_message()

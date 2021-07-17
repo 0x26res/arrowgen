@@ -4,6 +4,7 @@ import pathlib
 import random
 import typing
 
+import google.protobuf.timestamp_pb2
 from google.protobuf.descriptor import (
     FieldDescriptor,
     EnumDescriptor,
@@ -13,6 +14,7 @@ from google.protobuf.descriptor import (
 from google.protobuf.json_format import MessageToJson
 from google.protobuf.message import Message
 
+from arrowgen import arrow_converter
 from arrowgen.generator import get_proto_module
 
 VALID_DATA = {FieldDescriptor.TYPE_BYTES: [b"1", b"foo", b"\n"]}
@@ -41,6 +43,12 @@ VALID_CPP_DATA = {
     FieldDescriptor.CPPTYPE_BOOL: [True, False],
     FieldDescriptor.CPPTYPE_STRING: ["", "FOO", "BAR", "123"],
 }
+
+TIMESTAMPS = [
+    google.protobuf.timestamp_pb2.Timestamp(seconds=1626524738, nanos=123456789),
+    google.protobuf.timestamp_pb2.Timestamp(seconds=0, nanos=123456789),
+    google.protobuf.timestamp_pb2.Timestamp(seconds=946684800, nanos=0),
+]
 
 
 def generate_message(descriptor: Descriptor, count: int) -> Message:
@@ -79,9 +87,11 @@ def generate_field_data(field: FieldDescriptor, count: int):
         return _generate_data(field, count)
 
 
-def _generate_data(field: FieldDescriptor, count):
+def _generate_data(field: FieldDescriptor, count) -> typing.Any:
     if field.type == FieldDescriptor.TYPE_ENUM:
         return _generate_enum(field.enum_type)
+    elif arrow_converter.is_timestamp(field):
+        return random.choice(TIMESTAMPS)
     elif field.type == FieldDescriptor.TYPE_MESSAGE:
         return generate_message(field.message_type, count)
     elif field.type in VALID_DATA:

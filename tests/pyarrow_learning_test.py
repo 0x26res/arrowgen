@@ -118,9 +118,9 @@ class LearningTest(unittest.TestCase):
         list_offsets_buffer = pyarrow.array([], pyarrow.int32()).buffers()[1]
 
         list_array = pyarrow.ListArray.from_buffers(
-            type=struct_type,
-            length=4,
+            type=pyarrow.list_(struct_type),
+            length=0,
             buffers=[list_validity_buffer, list_offsets_buffer],
             children=[struct_array],
         )
-        self.assertEqual(list_array.type, pyarrow.list_(struct_type))
+        self.assertEqual(0, len(list_array))
